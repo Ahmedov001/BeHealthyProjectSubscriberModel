@@ -1,0 +1,27 @@
+.homepage {
+    background-image: url('/images/how-to-follow-your-diet-plans.jpg');
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    display: flex;
+    color: black;
+}
+.unauthorizeimg {
+    background-image: url('/images/what-is-a-401-error.png');
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    display: flex;
+    color: black;
+}
+.signuppageimg {
+    background-image: url('/images/light-blue-yellow-gradient-blur-background-vector.jpg');
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    display: flex;
+    color: black;
+}
+
+
+
