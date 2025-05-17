@@ -110,14 +110,13 @@ const DietitiansListForUser = () => {
     return (
         <Container className="mt-5">
             <Row>
-                {dietitians.map(d => (
+                {dietitians.filter(d=> d.status === "Accepted").map(d => (
                     <Col key={d.id} sm={12} md={6} lg={4} className="mb-4">
                         <Card className="h-100">
                             <Card.Body>
                                 <Card.Title>{d.username}</Card.Title>
                                 <Card.Subtitle className="mb-2 text-muted">{d.nickname}</Card.Subtitle>
                                 <Card.Text>
-                                    <strong>ID:</strong> {d.id}<br />
                                     <strong>Experience:</strong> {d.experience} years<br />
                                     <strong>Certification:</strong> {d.certifications?.join(', ')}<br />
                                     <strong>Specialization:</strong> {d.specialization}<br />

@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Container, Row, Col, ListGroup, Form, Button, Card } from 'react-bootstrap';
 import * as signalR from '@microsoft/signalr';
+import { jwtDecode } from "jwt-decode";
 import UserNavbar from './UserNavbar';
 
 const UserChatPage = () => {
@@ -9,9 +10,18 @@ const UserChatPage = () => {
     const [messages, setMessages] = useState([]);
     const [messageText, setMessageText] = useState('');
     const [connection, setConnection] = useState(null);
+    const messagesEndRef = useRef(null);
+
 
     const token = sessionStorage.getItem("token");
     const userId = sessionStorage.getItem("userId");
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+
+
 
     useEffect(() => {
         fetch("https://localhost:7148/api/User/get-subscribed-dietitians", {
@@ -22,7 +32,7 @@ const UserChatPage = () => {
             }
         })
             .then(res => res.json())
-            .then(data => setSubscribedDietitians(data))
+            .then(data => setSubscribedDietitians(data), console.log)
             .catch(err => console.error("Failed to load dietitians", err));
     }, [token]);
 
@@ -38,19 +48,31 @@ const UserChatPage = () => {
     }, [token]);
 
     useEffect(() => {
-        if (connection && connection.state === signalR.HubConnectionState.Connected) {
+        if (connection) {
+            if (connection.state !== signalR.HubConnectionState.Connected) {
+                connection
+                    .start()
+                    .then(() => console.log("SignalR connected"))
+                    .catch(err => console.error("SignalR connection fail:", err));
+            }
+
+            connection.off("ReceiveMessage");
+
             connection.on("ReceiveMessage", (senderId, message) => {
-                console.log("Received message from:", senderId, "msg:", message);
+                console.log("New Message:", senderId, message);
 
                 if (senderId === selectedDietitian || senderId === userId) {
-                    setMessages(prev => [...prev, {
-                        sender: senderId === userId ? "me" : senderId,
-                        content: message
-                    }]);
+                    setMessages(prev => [
+                        ...prev,
+                        {
+                            sender: senderId === userId ? "me" : senderId,
+                            content: message
+                        }
+                    ]);
                 }
             });
         }
-    }, [connection]);
+    }, [connection, selectedDietitian]);
 
     useEffect(() => {
         if (selectedDietitian && userId) {
@@ -75,7 +97,6 @@ const UserChatPage = () => {
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!messageText || !selectedDietitian) return;
-
         await fetch("https://localhost:7148/api/Chat/send-message", {
             method: "POST",
             headers: {
@@ -92,14 +113,14 @@ const UserChatPage = () => {
         setMessageText("");
     };
 
-    const handleSelectDietitian = (dietitianId) => {
-        setSelectedDietitian(dietitianId);
-        setMessages([]); // Eski mesajlarý temizle
+    const handleSelectDietitian = (dietitian) => {
+        setSelectedDietitian(dietitian);
+        setMessages([]);
     };
 
-    return (
+    return (<>
+        <UserNavbar />
         <Container className="mt-4">
-            <UserNavbar />
             <Row>
                 <Col md={4}>
                     <h5>Your Subscriptions</h5>
@@ -108,7 +129,7 @@ const UserChatPage = () => {
                             <ListGroup.Item
                                 action
                                 key={d}
-                                active={selectedDietitian === d}
+                                active={selectedDietitian?.id === d.id}
                                 onClick={() => handleSelectDietitian(d)}
                             >
                                 {d}
@@ -117,7 +138,7 @@ const UserChatPage = () => {
                     </ListGroup>
                 </Col>
                 <Col md={8}>
-                    <h5>Chat</h5>
+                    <h5>Chat with {selectedDietitian?.username}</h5>
                     {selectedDietitian ? (
                         <Card>
                             <Card.Body style={{ height: "400px", overflowY: "auto" }}>
@@ -128,6 +149,7 @@ const UserChatPage = () => {
                                             <strong>{msg.sender === "me" ? "You" : "Dietitian"}:</strong> {msg.content}
                                         </div>
                                     ))}
+                                <div ref={messagesEndRef}></div>
                             </Card.Body>
                             <Card.Footer>
                                 <Form onSubmit={handleSendMessage} className="d-flex">
@@ -147,6 +169,7 @@ const UserChatPage = () => {
                 </Col>
             </Row>
         </Container>
+    </>
     );
 };
 

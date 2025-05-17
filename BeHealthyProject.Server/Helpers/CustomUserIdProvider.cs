@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BeHealthyProject.Entities
 {
-	internal class CustomUserIdProvider : IUserIdProvider
+	public class CustomUserIdProvider : IUserIdProvider
 	{
 		public string GetUserId(HubConnectionContext connection)
 		{

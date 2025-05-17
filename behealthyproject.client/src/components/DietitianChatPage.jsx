@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Container, Row, Col, ListGroup, Form, Button, Card } from 'react-bootstrap';
 import * as signalR from '@microsoft/signalr';
+import DietitianNavbar from './DietitianNavbar';
 
 const DietitianChatPage = () => {
     const [subscribers, setSubscribers] = useState([]);
@@ -8,10 +9,15 @@ const DietitianChatPage = () => {
     const [messages, setMessages] = useState([]);
     const [messageText, setMessageText] = useState('');
     const [connection, setConnection] = useState(null);
+    const messagesEndRef = useRef(null);
 
     const token = sessionStorage.getItem("token");
     const dietitianId = sessionStorage.getItem("userId");
     console.log(dietitianId)
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     useEffect(() => {
         fetch("https://localhost:7148/api/Dietitian/get-subscribed-users", {
@@ -29,22 +35,34 @@ const DietitianChatPage = () => {
             .build();
 
         setConnection(newConnection);
-    }, [token]);
+    }, [token]);    
 
     useEffect(() => {
-        if (connection && connection.state === signalR.HubConnectionState.Connected) {
-            connection.on("ReceiveMessage", (senderId, message) => {
-                console.log("Received message from:", senderId, "msg:", message);
+        if (connection) {
+            if (connection.state !== signalR.HubConnectionState.Connected) {
+                connection
+                    .start()
+                    .then(() => console.log("SignalR connected"))
+                    .catch(err => console.error("SignalR connection failed:", err));
+            }
 
-                if (senderId === selectedUser || senderId === dietitianId) {
-                    setMessages(prev => [...prev, {
-                        sender: senderId === userId ? "me" : senderId,
-                        content: message
-                    }]);
+            connection.off("ReceiveMessage");
+
+            connection.on("ReceiveMessage", (senderId, message) => {
+                console.log("New Message:", senderId, message);
+
+                if (senderId === selectedUser || senderId === userId) {
+                    setMessages(prev => [
+                        ...prev,
+                        {
+                            sender: senderId === dietitianId ? "me" : senderId,
+                            content: message
+                        }
+                    ]);
                 }
             });
         }
-    }, [connection]);
+    }, [connection, selectedUser]);
 
     useEffect(() => {
         if (selectedUser && dietitianId) {
@@ -59,10 +77,10 @@ const DietitianChatPage = () => {
                             content: m.message
                         })));
                     } else {
-                        console.error("API did not return an array", data);
+                        console.error("Invalid message data:", data);
                     }
                 })
-                .catch(err => console.error(err));
+                .catch(err => console.error("Error fetching messages:", err));
         }
     }, [selectedUser]);
 
@@ -87,6 +105,8 @@ const DietitianChatPage = () => {
     };
 
     return (
+        <>
+            <DietitianNavbar/>
         <Container className="mt-4">
             <Row>
                 <Col md={4}>
@@ -116,6 +136,7 @@ const DietitianChatPage = () => {
                                             <strong>{msg.sender === "me" ? "You" : "Client"}:</strong> {msg.content}
                                         </div>
                                     ))}
+                                <div ref={messagesEndRef}></div>
                             </Card.Body>
                             <Card.Footer>
                                 <Form className="d-flex" onSubmit={handleSendMessage}>
@@ -134,7 +155,8 @@ const DietitianChatPage = () => {
                     )}
                 </Col>
             </Row>
-        </Container>
+            </Container>
+        </>
     );
 };
 

@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
 {
 	options.AddPolicy("AllowAll",
 		builder => builder
-			.WithOrigins("https://localhost:5173") // React uygulamanýn adresi
+			.WithOrigins("https://localhost:5173") 
 			.AllowAnyHeader()
 			.AllowAnyMethod()
 			.AllowCredentials());
@@ -81,7 +81,7 @@ builder.Services.AddAuthentication(options =>
 				var path = context.HttpContext.Request.Path;
 
 				if (!string.IsNullOrEmpty(accessToken) &&
-					path.StartsWithSegments("/hubs/notifications"))
+					path.StartsWithSegments("/hub/notifications"))
 				{
 					context.Token = accessToken;
 				}
@@ -103,11 +103,10 @@ builder.Services.AddAuthorization(options =>
 		policy.RequireRole("User");
 	});
 });
-builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 builder.Services.AddScoped<IDietitianService,DietitianService>();
 builder.Services.AddScoped<ISubscribeService,SubscribeService>();
-	
+
 
 
 var app = builder.Build();

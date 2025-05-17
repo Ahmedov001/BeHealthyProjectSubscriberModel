@@ -88,6 +88,7 @@ function LoginPageUser() {
             setSnackbarMessage('Sent mail');
             setSnackbarSeverity('success');
             setOpenSnackbar(true);
+            navigate("/resetpassword")
             setShowModal(false);
         } else {
             setSnackbarMessage('Failed to send mail. Please try again.');

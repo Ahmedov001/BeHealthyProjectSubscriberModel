@@ -1,19 +1,25 @@
 import React from 'react';
+import { Navbar, Nav } from 'react-bootstrap';
 
 function UserNavbar() {
-  return (
-      <nav className="navbar navbar-expand navbar-dark mb-4" style={{ backgroundColor: '#1f232b' }}>
-          <div className="container-fluid">
-              <a className="navbar-brand" href="/userpage">BeHealthy</a>
-              <ul className="navbar-nav me-auto mb-2 mb-lg-0 d-flex flex-row gap-3">
-                  <li className="nav-item"><a className="nav-link active" href="/userpage">Home</a></li>
-                  <li className="nav-item"><a className="nav-link" href="/userprofile">Profile</a></li>
-                  <li className="nav-item"><a className="nav-link" href="#">Posts</a></li>
-                  <li className="nav-item"><a className="nav-link" href="/dietitianslist">Dietitians</a></li>
-              </ul>
-          </div>
-      </nav>
-  );
+    return (
+        <Navbar expand="lg" className="sticky-top w-100 m-0 p-0 shadow-sm" style={{ backgroundColor: '#ffffff' }}>
+            <div className="w-100 d-flex justify-content-between align-items-center px-4 py-2">
+                <Navbar.Brand href="/userpage" className="fw-bold text-success fs-4 m-0 mx-3">
+                    BeHealthy
+                </Navbar.Brand>
+                <Navbar.Toggle aria-controls="user-navbar-nav" />
+                <Navbar.Collapse id="user-navbar-nav">
+                    <Nav className="d-flex gap-3">
+                        <Nav.Link href="/userpage" className="text-dark fw-semibold">Home</Nav.Link>
+                        <Nav.Link href="/userprofile" className="text-dark fw-semibold">Profile</Nav.Link>
+                        <Nav.Link href="/userchat" className="text-dark fw-semibold">Chat</Nav.Link>
+                        <Nav.Link href="/dietitianslist" className="text-dark fw-semibold">Dietitians</Nav.Link>
+                    </Nav>
+                </Navbar.Collapse>
+            </div>
+        </Navbar>
+    );
 }
 
 export default UserNavbar;

@@ -26,8 +26,11 @@ namespace BeHealthyProject.BusinessLayer.Concrete
 
 		public async Task SendChatMessage(string senderId, string receiverId, string message)
 		{
+			Console.WriteLine($"[SignalR] Mesaj gönderiliyor -> Alıcı: {receiverId}, Gönderici: {senderId}, Mesaj: {message}");
+
 			await _hubContext.Clients.User(receiverId)
 				.SendAsync("ReceiveMessage", senderId, message);
 		}
+
 	}
 }

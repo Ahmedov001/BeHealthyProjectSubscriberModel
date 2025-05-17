@@ -19,15 +19,12 @@ namespace BeHealthyProject.Server.Controllers
 		private readonly UserManager<BaseUser> _userManager;
 		private readonly IDietitianService _dietitianService;
 		private readonly ISubscribeService _subscribeService;
-		private readonly IHubContext<NotificationHub> _hubContext;
-		private readonly INotificationService _notificationService;
 
 		public UserController(UserManager<BaseUser> userManager, IDietitianService dietitianService, ISubscribeService subscribeService, IHubContext<NotificationHub> hubContext)
 		{
 			_userManager = userManager;
 			_dietitianService = dietitianService;
 			_subscribeService = subscribeService;
-			_hubContext = hubContext;
 		}
 
 
@@ -104,7 +101,7 @@ namespace BeHealthyProject.Server.Controllers
 			if (string.IsNullOrEmpty(request.DietitianId) || string.IsNullOrEmpty(request.Plan))
 				return BadRequest("DietitianId and Plan are required.");
 
-			await _notificationService.NotifyDietitianSubscription(request.DietitianId, user.UserName);
+
 			await _subscribeService.Subscribe(request.DietitianId, userId, request.Plan);
 			return Ok("Subscribe successful");
 		}
@@ -127,14 +124,26 @@ namespace BeHealthyProject.Server.Controllers
 			}
 		}
 		[HttpGet("get-subscribed-dietitians")]
-		public async Task<IActionResult> GetSubscribedDietitians()
+		public async Task<ActionResult> GetSubscribedDietitians()
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			if (userId == null)
 				return Unauthorized("User not found.");
 
 			var dietitianIds = await _subscribeService.GetSubscribedDietitians(userId);
-			return Ok(dietitianIds);
+
+			var dietitianList = new List<ShowDietitianDto>();
+			foreach (var item in dietitianIds)
+			{
+				var dietitian = await _userManager.FindByIdAsync(item) as Dietitian;
+				dietitianList.Add(new ShowDietitianDto
+				{
+					Id = dietitian.Id,
+					Username = dietitian.UserName
+				}) ;
+			}
+			
+			return Ok(dietitianList);
 		}
 
 		

@@ -18,5 +18,13 @@ namespace BeHealthyProject.BusinessLayer.Hubs
 		{
 			await Clients.User(receiverId).SendAsync("ReceiveMessage", senderId, message);
 		}
+		public override Task OnConnectedAsync()
+		{
+			var userId = Context.UserIdentifier;
+			Console.WriteLine($"[SignalR] Yeni bağlantı: {userId}");
+
+			return base.OnConnectedAsync();
+		}
+
 	}
 }

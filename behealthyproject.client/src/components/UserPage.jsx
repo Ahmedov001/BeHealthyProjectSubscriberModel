@@ -37,13 +37,11 @@ function UserPage() {
         { name: "Snacks/Other", icon: "bi-moon-fill", color: "#ba68c8" },
     ];
 
-
     useEffect(() => {
         axios.get('https://localhost:7148/foods')
             .then(res => setFoods(res.data))
             .catch(err => console.error("Error loading foods:", err));
     }, []);
-
 
     useEffect(() => {
         const token = sessionStorage.getItem('token');
@@ -116,107 +114,93 @@ function UserPage() {
     }));
 
     return (
-        <div style={{ backgroundColor: '#2f343d' }} className="min-vh-100 text-white p-4">
-
-            <UserNavbar/>
-            <div className="mb-4">
-                <div className="d-flex justify-content-between align-items-center mb-1">
-                    <h5 className="mb-0">FOOD DIARY</h5>
-                    <div>
-                        <small className="me-2">Calories</small>
-                        <strong>{totals.calories.toFixed(0)}</strong>
+        <>
+            <UserNavbar />
+            <div style={{ backgroundColor: '#2f343d' }} className="min-vh-100 text-white px-3 px-md-5 py-4">
+                <div className="mb-4">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                        <h4 className="fw-bold text-light">📘 Food Diary</h4>
+                        <div>
+                            <span className="me-2">🔥 Calories:</span>
+                            <strong className="text-warning">{totals.calories.toFixed(0)} kcal</strong>
+                        </div>
                     </div>
-                </div>
-                <small>
-                    Fat: {totals.fat.toFixed(1)}g, Carbs: {totals.carbs.toFixed(1)}g,
-                    Protein: {totals.protein.toFixed(1)}g, Sugar: {totals.sugar.toFixed(1)}g
-                </small>
-            </div>
-
-            {userProfile && (
-                <div className="mb-4 p-4 rounded-4 shadow" style={{ backgroundColor: '#3a4049' }}>
-                    <h4 className="mb-3 fw-bold text-info">🧠 Daily Recommendations</h4>
-                    <p className="mb-1">
-                        🔥 <strong>Suggested Calories:</strong> <span className="text-warning">{recommendations.dailyCalories} kcal</span>
-                    </p>
                     <p className="mb-0">
-                        💧 <strong>Water Intake:</strong> <span className="text-primary">{(recommendations.waterMl / 1000).toFixed(2)} L</span>
+                        <small >
+                            Fat: {totals.fat.toFixed(1)}g | Carbs: {totals.carbs.toFixed(1)}g | Protein: {totals.protein.toFixed(1)}g | Sugar: {totals.sugar.toFixed(1)}g
+                        </small>
                     </p>
                 </div>
-            )}
 
-        
-            {meals.map((meal, index) => (
-                <div
-                    key={index}
-                    className="d-flex flex-column p-3 rounded-3 mb-3"
-                    style={{ backgroundColor: '#3a4049' }}
-                >
-                    <div className="d-flex align-items-center justify-content-between">
-                        <div className="d-flex align-items-center">
-                            <i className={`bi ${meal.icon} me-2`} style={{ color: meal.color, fontSize: '1.5rem' }}></i>
-                            <span style={{ fontSize: '1.1rem' }}>{meal.name}</span>
-                        </div>
-                        <button
-                            className="btn btn-link p-0 border-0"
-                            onClick={() => handleAddClick(meal.name)}
-                            style={{ color: '#00c853', fontSize: '1.5rem' }}
-                        >
-                            <i className="bi bi-plus-lg"></i>
-                        </button>
+                {userProfile && (
+                    <div className="mb-4 p-4 rounded-4 shadow" style={{ backgroundColor: '#3a4049' }}>
+                        <h5 className="mb-3 fw-bold text-info">🧠 Daily Recommendations</h5>
+                        <p className="mb-1">
+                            🔥 <strong>Suggested Calories:</strong> <span className="text-warning">{recommendations.dailyCalories} kcal</span>
+                        </p>
+                        <p className="mb-0">
+                            💧 <strong>Water Intake:</strong> <span className="text-primary">{(recommendations.waterMl / 1000).toFixed(2)} L</span>
+                        </p>
                     </div>
+                )}
 
-                    <ul className="mt-2 mb-1 list-unstyled">
-                        {mealFoods[meal.name].map((food, i) => (
-                            <li key={i} className="d-flex justify-content-between align-items-center">
-                                <span style={{ fontSize: '0.9rem' }}>
-                                    {food.name} – {food.calories} kcal
-                                </span>
-                                <button
-                                    className="btn btn-sm btn-outline-danger"
-                                    onClick={() => handleRemoveFood(meal.name, i)}
-                                >
-                                    x
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-
-                    {selectedMeal === meal.name && (
-                        <div className="mt-2">
-                            <Select
-                                value={selectedFoodOption}
-                                onChange={handleFoodSelect}
-                                options={foodOptions}
-                                placeholder="Select food..."
-                                isSearchable
-                                styles={{
-                                    control: (base) => ({
-                                        ...base,
-                                        backgroundColor: "#37474f",
-                                        borderColor: "#00c853",
-                                        color: "white"
-                                    }),
-                                    menu: (base) => ({
-                                        ...base,
-                                        backgroundColor: "#2f343d",
-                                        color: "white"
-                                    }),
-                                    singleValue: (base) => ({
-                                        ...base,
-                                        color: "white"
-                                    }),
-                                    input: (base) => ({
-                                        ...base,
-                                        color: "white"
-                                    })
-                                }}
-                            />
+                {meals.map((meal, index) => (
+                    <div key={index} className="p-3 mb-4 rounded-3 shadow-sm" style={{ backgroundColor: '#3a4049' }}>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                            <div className="d-flex align-items-center">
+                                <i className={`bi ${meal.icon} me-2`} style={{ color: meal.color, fontSize: '1.4rem' }}></i>
+                                <h6 className="mb-0 text-light">{meal.name}</h6>
+                            </div>
+                            <button className="btn btn-sm btn-outline-success" onClick={() => handleAddClick(meal.name)}>
+                                <i className="bi bi-plus-circle me-1"></i> Add
+                            </button>
                         </div>
-                    )}
-                </div>
-            ))}
-        </div>
+
+                        <ul className="list-group list-group-flush">
+                            {mealFoods[meal.name].map((food, i) => (
+                                <li key={i} className="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center px-0">
+                                    <span>{food.name} – {food.calories} kcal</span>
+                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleRemoveFood(meal.name, i)}>x</button>
+                                </li>
+                            ))}
+                        </ul>
+
+                        {selectedMeal === meal.name && (
+                            <div className="mt-2">
+                                <Select
+                                    value={selectedFoodOption}
+                                    onChange={handleFoodSelect}
+                                    options={foodOptions}
+                                    placeholder="Select food..."
+                                    isSearchable
+                                    styles={{
+                                        control: (base) => ({
+                                            ...base,
+                                            backgroundColor: "#37474f",
+                                            borderColor: "#00c853",
+                                            color: "white"
+                                        }),
+                                        menu: (base) => ({
+                                            ...base,
+                                            backgroundColor: "#2f343d",
+                                            color: "white"
+                                        }),
+                                        singleValue: (base) => ({
+                                            ...base,
+                                            color: "white"
+                                        }),
+                                        input: (base) => ({
+                                            ...base,
+                                            color: "white"
+                                        })
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </>
     );
 }
 
