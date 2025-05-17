@@ -1,12 +1,12 @@
 ﻿using BeHealthyProject.BusinessLayer.Abstract;
-using BeHealthyProject.BusinessLayer.Concrete;
+using BeHealthyProject.BusinessLayer.Hubs;
 using BeHealthyProject.Entities;
 using BeHealthyProject.Entities.Dtos;
 using BeHealthyProject.Server.Dtos;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
 namespace BeHealthyProject.Server.Controllers
@@ -19,13 +19,18 @@ namespace BeHealthyProject.Server.Controllers
 		private readonly UserManager<BaseUser> _userManager;
 		private readonly IDietitianService _dietitianService;
 		private readonly ISubscribeService _subscribeService;
+		private readonly IHubContext<NotificationHub> _hubContext;
+		private readonly INotificationService _notificationService;
 
-		public UserController(UserManager<BaseUser> userManager, IDietitianService dietitianService, ISubscribeService subscribeService)
+		public UserController(UserManager<BaseUser> userManager, IDietitianService dietitianService, ISubscribeService subscribeService, IHubContext<NotificationHub> hubContext)
 		{
 			_userManager = userManager;
 			_dietitianService = dietitianService;
 			_subscribeService = subscribeService;
+			_hubContext = hubContext;
 		}
+
+
 
 		[HttpPut("update-profile")]
 		public async Task<ActionResult> UpdateProfile([FromBody] UpdateUserProfileDto dto)
@@ -87,38 +92,52 @@ namespace BeHealthyProject.Server.Controllers
 			var dietitians = _dietitianService.GetDietitians();
 			return dietitians;
 		}
-
 		[HttpPost("subscribe")]
-		public async Task<ActionResult> Subscribe([FromBody] string dietitianId, string plan)
+		public async Task<ActionResult> Subscribe([FromBody] SubscribeRequestDto request)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			if (userId == null)
-			{
 				return NotFound("User not found!");
-			}
+			var baseUser = await _userManager.FindByIdAsync(userId);
+			var user = baseUser as User;
 
-			if (string.IsNullOrEmpty(dietitianId))
-			{
-				return BadRequest("DietitianId is required.");
-			}
+			if (string.IsNullOrEmpty(request.DietitianId) || string.IsNullOrEmpty(request.Plan))
+				return BadRequest("DietitianId and Plan are required.");
 
-			await _subscribeService.Subscribe(dietitianId, userId, plan);
+			await _notificationService.NotifyDietitianSubscription(request.DietitianId, user.UserName);
+			await _subscribeService.Subscribe(request.DietitianId, userId, request.Plan);
 			return Ok("Subscribe successful");
 		}
 
-		//[HttpGet("get-subscribed-dietitians")]
-		//public async Task<ActionResult<List<string>>> GetSubscribedDietitians()
-		//{
-		//	var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-		//	if (userId == null)
-		//	{
-		//		return NotFound("User not found!");
-		//	}
+		[HttpPost("unsubscribe")]
+		public async Task<IActionResult> Unsubscribe([FromBody] UnsubscribeRequestDto request)
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (userId == null)
+				return Unauthorized("User not found.");
 
-		//	var subscribedDietitians = await _subscribeService.GetSubscribedDietitians(userId);
-		//	return subscribedDietitians;
-		//}
+			try
+			{
+				var result = await _subscribeService.Unsubscribe(request.DietitianId, userId);
+				return Ok(result);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(ex.Message);
+			}
+		}
+		[HttpGet("get-subscribed-dietitians")]
+		public async Task<IActionResult> GetSubscribedDietitians()
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (userId == null)
+				return Unauthorized("User not found.");
 
+			var dietitianIds = await _subscribeService.GetSubscribedDietitians(userId);
+			return Ok(dietitianIds);
+		}
+
+		
 
 
 		[HttpGet("check-availability")]

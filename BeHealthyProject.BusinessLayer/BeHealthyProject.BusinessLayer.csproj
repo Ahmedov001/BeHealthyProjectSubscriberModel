@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BeHealthyProject.DataAccessLayer\BeHealthyProject.DataAccessLayer.csproj" />
     <ProjectReference Include="..\BeHealthyProject.Entities\BeHealthyProject.Entities.csproj" />
   </ItemGroup>

@@ -20,6 +20,8 @@ import AdminPage from './components/AdminPage';
 import PendingPage from './components/PendingPage';
 import DeclinedPage from './components/DeclinedPage';
 import AddBalancePage from './components/AddBalancePage';
+import UserChatPage from './components/UserChatPage';
+import DietitianChatPage from './components/DietitianChatPage';
 
 function App() {
     return (
@@ -72,6 +74,16 @@ function App() {
                 <Route path="/dietitianprofile" element={
                     <ProtectedRoute requiredRole="dietitian">
                         <DietitianProfile />
+                    </ProtectedRoute>
+                } />
+                <Route path="/dietitianchat" element={
+                    <ProtectedRoute requiredRole="dietitian">
+                        <DietitianChatPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/userchat" element={
+                    <ProtectedRoute requiredRole="user">
+                        <UserChatPage />
                     </ProtectedRoute>
                 } />
 

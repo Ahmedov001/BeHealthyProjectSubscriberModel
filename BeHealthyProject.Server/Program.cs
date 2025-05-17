@@ -1,10 +1,12 @@
 using BeHealthyProject.BusinessLayer.Abstract;
 using BeHealthyProject.BusinessLayer.Concrete;
+using BeHealthyProject.BusinessLayer.Hubs;
 using BeHealthyProject.Entities;
 using BeHealthyProject.Server.Data;
 using BeHealthyProject.Server.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -18,6 +20,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddSignalR();
+
+
 var conn = builder.Configuration.GetConnectionString("Default");
 builder.Services.AddDbContext<BeHealthyDbContext>(options =>
 {
@@ -28,9 +33,11 @@ builder.Services.AddHttpClient();
 builder.Services.AddCors(options =>
 {
 	options.AddPolicy("AllowAll",
-		builder => builder.AllowAnyOrigin()
-						  .AllowAnyMethod()
-						  .AllowAnyHeader());
+		builder => builder
+			.WithOrigins("https://localhost:5173") // React uygulamanýn adresi
+			.AllowAnyHeader()
+			.AllowAnyMethod()
+			.AllowCredentials());
 });
 
 
@@ -66,6 +73,22 @@ builder.Services.AddAuthentication(options =>
 			ValidAudience = builder.Configuration["Jwt:Audience"],
 			IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
 		};
+		options.Events = new JwtBearerEvents
+		{
+			OnMessageReceived = context =>
+			{
+				var accessToken = context.Request.Query["access_token"];
+				var path = context.HttpContext.Request.Path;
+
+				if (!string.IsNullOrEmpty(accessToken) &&
+					path.StartsWithSegments("/hubs/notifications"))
+				{
+					context.Token = accessToken;
+				}
+
+				return Task.CompletedTask;
+			}
+		};
 	});
 
 builder.Services.AddAuthorization(options =>
@@ -80,8 +103,12 @@ builder.Services.AddAuthorization(options =>
 		policy.RequireRole("User");
 	});
 });
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 builder.Services.AddScoped<IDietitianService,DietitianService>();
 builder.Services.AddScoped<ISubscribeService,SubscribeService>();
+	
+
 
 var app = builder.Build();
 
@@ -101,6 +128,7 @@ app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapHub<NotificationHub>("/hub/notifications");
 
 app.MapControllers();
 

@@ -22,193 +22,193 @@ using System.Text;
 
 namespace BeHealthyProject.Server.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
-    {
-        private readonly UserManager<BaseUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly BeHealthyDbContext _beHealthyDbContext;
-        private readonly IConfiguration _configuration;
-        private readonly IDistributedCache _cache;
-        private readonly IDietitianService _dietitianService;
+	[Route("api/[controller]")]
+	[ApiController]
+	public class AuthController : ControllerBase
+	{
+		private readonly UserManager<BaseUser> _userManager;
+		private readonly RoleManager<IdentityRole> _roleManager;
+		private readonly BeHealthyDbContext _beHealthyDbContext;
+		private readonly IConfiguration _configuration;
+		private readonly IDistributedCache _cache;
+		private readonly IDietitianService _dietitianService;
 
-        public AuthController(UserManager<BaseUser> userManager, RoleManager<IdentityRole> roleManager, BeHealthyDbContext beHealthyDbContext, IConfiguration configuration, IDistributedCache cache, IDietitianService dietitianService)
-        {
-            _userManager = userManager;
-            _roleManager = roleManager;
-            _beHealthyDbContext = beHealthyDbContext;
-            _configuration = configuration;
-            _cache = cache;
-            _dietitianService = dietitianService;
-        }
-
-
-        [HttpPost("signup-user")]
-        public async Task<ActionResult> SignUpAsUser([FromBody] RegisterDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest();
-
-            var checkDbUser = await _beHealthyDbContext.Users.FirstOrDefaultAsync(u => u.UserName == dto.Username);
-
-            if (checkDbUser != null)
-            {
-                return BadRequest();
-            }
-            var user = new User
-            {
-                Nickname = dto.Nickname,
-                UserName = dto.Username,
-                Email = dto.Email,
-
-            };
-
-            var result = await _userManager.CreateAsync(user, dto.Password);
-            if (result.Succeeded)
-            {
-                if (!await _roleManager.RoleExistsAsync("User"))
-                {
-                    await _roleManager.CreateAsync(new IdentityRole("User"));
-                }
-                await _userManager.AddToRoleAsync(user, "User");
-                //await _beHealthyDbContext.AddAsync(user);
-                await _beHealthyDbContext.SaveChangesAsync();
-                return Ok(new
-                {
-                    Status = "Success",
-                    Message = "User created succesfully"
-                });
-            }
-            return BadRequest(result.Errors);
-        }
+		public AuthController(UserManager<BaseUser> userManager, RoleManager<IdentityRole> roleManager, BeHealthyDbContext beHealthyDbContext, IConfiguration configuration, IDistributedCache cache, IDietitianService dietitianService)
+		{
+			_userManager = userManager;
+			_roleManager = roleManager;
+			_beHealthyDbContext = beHealthyDbContext;
+			_configuration = configuration;
+			_cache = cache;
+			_dietitianService = dietitianService;
+		}
 
 
-        [HttpPost("signup-dietitian")]
-        public async Task<ActionResult> SignUpAsDietitian([FromBody] RegisterDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest();
+		[HttpPost("signup-user")]
+		public async Task<ActionResult> SignUpAsUser([FromBody] RegisterDto dto)
+		{
+			if (!ModelState.IsValid)
+				return BadRequest();
 
-            var checkDbUser = await _beHealthyDbContext.Users.FirstOrDefaultAsync(u => u.UserName == dto.Username);
-            if (checkDbUser != null)
-            {
-                return BadRequest();
-            }
-            var dietitian = new Dietitian
-            {
-                Nickname = dto.Nickname,
-                UserName = dto.Username,
-                Email = dto.Email,
-            };
-            var result = await _userManager.CreateAsync(dietitian, dto.Password);
-            if (result.Succeeded)
-            {
-                if (!await _roleManager.RoleExistsAsync("Dietitian"))
-                {
-                    await _roleManager.CreateAsync(new IdentityRole("Dietitian"));
-                }
-                await _userManager.AddToRoleAsync(dietitian, "Dietitian");
-                await _beHealthyDbContext.SaveChangesAsync();
+			var checkDbUser = await _beHealthyDbContext.Users.FirstOrDefaultAsync(u => u.UserName == dto.Username);
 
-                return Ok(new
-                {
-                    Status = "Success",
-                    Message = "Dietitian created succesfully"
-                });
-            }
-            return BadRequest(result.Errors);
-        }
+			if (checkDbUser != null)
+			{
+				return BadRequest();
+			}
+			var user = new User
+			{
+				Nickname = dto.Nickname,
+				UserName = dto.Username,
+				Email = dto.Email,
 
+			};
 
-        [HttpPost("signin-user")]
-        public async Task<IActionResult> SignInForUser([FromBody] LoginDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest();
-
-            var baseUser = await _userManager.FindByNameAsync(dto.Username);
-            var user = baseUser as User;
-            if (user != null && await _userManager.CheckPasswordAsync(user, dto.Password))
-            {
-                var userRoles = await _userManager.GetRolesAsync(user);
-
-                var authClaims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name,user.UserName),
-                    new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
-                };
-                authClaims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
-                foreach (var role in userRoles)
-                {
-                    authClaims.Add(new Claim(ClaimTypes.Role, role));
-                }
-
-                var token = GetToken(authClaims);
-
-                return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo });
-            }
-
-            return Unauthorized();
-        }
+			var result = await _userManager.CreateAsync(user, dto.Password);
+			if (result.Succeeded)
+			{
+				if (!await _roleManager.RoleExistsAsync("User"))
+				{
+					await _roleManager.CreateAsync(new IdentityRole("User"));
+				}
+				await _userManager.AddToRoleAsync(user, "User");
+				//await _beHealthyDbContext.AddAsync(user);
+				await _beHealthyDbContext.SaveChangesAsync();
+				return Ok(new
+				{
+					Status = "Success",
+					Message = "User created succesfully"
+				});
+			}
+			return BadRequest(result.Errors);
+		}
 
 
-        [HttpPost("signin-dietitian")]
-        public async Task<IActionResult> SignInForDietitian([FromBody] LoginDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest();
+		[HttpPost("signup-dietitian")]
+		public async Task<ActionResult> SignUpAsDietitian([FromBody] RegisterDto dto)
+		{
+			if (!ModelState.IsValid)
+				return BadRequest();
 
-            var baseUser = await _userManager.FindByNameAsync(dto.Username);
-            var user = baseUser as Dietitian;
-            if (user != null && await _userManager.CheckPasswordAsync(user, dto.Password))
-            {
-                var userRoles = await _userManager.GetRolesAsync(user);
+			var checkDbUser = await _beHealthyDbContext.Users.FirstOrDefaultAsync(u => u.UserName == dto.Username);
+			if (checkDbUser != null)
+			{
+				return BadRequest();
+			}
+			var dietitian = new Dietitian
+			{
+				Nickname = dto.Nickname,
+				UserName = dto.Username,
+				Email = dto.Email,
+			};
+			var result = await _userManager.CreateAsync(dietitian, dto.Password);
+			if (result.Succeeded)
+			{
+				if (!await _roleManager.RoleExistsAsync("Dietitian"))
+				{
+					await _roleManager.CreateAsync(new IdentityRole("Dietitian"));
+				}
+				await _userManager.AddToRoleAsync(dietitian, "Dietitian");
+				await _beHealthyDbContext.SaveChangesAsync();
 
-
-                var authClaims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name,user.UserName),
-                    new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
-                };
-                authClaims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
-                foreach (var role in userRoles)
-                {
-                    authClaims.Add(new Claim(ClaimTypes.Role, role));
-                }
-                var token = GetToken(authClaims);
-
-                return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo });
-            }
-
-            return Unauthorized();
-        }
-
-
-        [HttpPost("forgot-password")]
-        public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest();
-
-            if (request.Email == null)
-                return NotFound();
-
-            Random rnd = new Random();
-            string resetCode = rnd.Next(100000, 999999).ToString();
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("No reply", "behealthydfit@gmail.com"));
-            message.To.Add(new MailboxAddress("Dear User", request.Email));
-            message.Subject = "Reset Password";
-            await _cache.SetStringAsync(request.Email, resetCode, new DistributedCacheEntryOptions()
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-            });
+				return Ok(new
+				{
+					Status = "Success",
+					Message = "Dietitian created succesfully"
+				});
+			}
+			return BadRequest(result.Errors);
+		}
 
 
-            message.Body = new TextPart("html")
-            {
-                Text = $@"
+		[HttpPost("signin-user")]
+		public async Task<IActionResult> SignInForUser([FromBody] LoginDto dto)
+		{
+			if (!ModelState.IsValid)
+				return BadRequest();
+
+			var baseUser = await _userManager.FindByNameAsync(dto.Username);
+			var user = baseUser as User;
+			if (user != null && await _userManager.CheckPasswordAsync(user, dto.Password))
+			{
+				var userRoles = await _userManager.GetRolesAsync(user);
+
+				var authClaims = new List<Claim>
+				{
+					new Claim(ClaimTypes.Name,user.UserName),
+					new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
+					new Claim(ClaimTypes.NameIdentifier, user.Id)
+			};
+				foreach (var role in userRoles)
+				{
+					authClaims.Add(new Claim(ClaimTypes.Role, role));
+				}
+
+				var token = GetToken(authClaims);
+
+				return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo, UserId = user.Id});
+			}
+
+			return Unauthorized();
+		}
+
+
+		[HttpPost("signin-dietitian")]
+		public async Task<IActionResult> SignInForDietitian([FromBody] LoginDto dto)
+		{
+			if (!ModelState.IsValid)
+				return BadRequest();
+
+			var baseUser = await _userManager.FindByNameAsync(dto.Username);
+			var user = baseUser as Dietitian;
+			if (user != null && await _userManager.CheckPasswordAsync(user, dto.Password))
+			{
+				var userRoles = await _userManager.GetRolesAsync(user);
+
+
+				var authClaims = new List<Claim>
+				{
+					new Claim(ClaimTypes.Name,user.UserName),
+					new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
+					new Claim(ClaimTypes.NameIdentifier, user.Id)
+				};
+				foreach (var role in userRoles)
+				{
+					authClaims.Add(new Claim(ClaimTypes.Role, role));
+				}
+				var token = GetToken(authClaims);
+
+				return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo, UserId = user.Id });
+			}
+
+			return Unauthorized();
+		}
+
+
+		[HttpPost("forgot-password")]
+		public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+		{
+			if (!ModelState.IsValid)
+				return BadRequest();
+
+			if (request.Email == null)
+				return NotFound();
+
+			Random rnd = new Random();
+			string resetCode = rnd.Next(100000, 999999).ToString();
+			var message = new MimeMessage();
+			message.From.Add(new MailboxAddress("No reply", "behealthydfit@gmail.com"));
+			message.To.Add(new MailboxAddress("Dear User", request.Email));
+			message.Subject = "Reset Password";
+			await _cache.SetStringAsync(request.Email, resetCode, new DistributedCacheEntryOptions()
+			{
+				AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+			});
+
+
+			message.Body = new TextPart("html")
+			{
+				Text = $@"
     <html>
     <body style='font-family: Arial, sans-serif; text-align: center; padding: 20px;'>
         <div style='background: #fff; padding: 20px; border-radius: 8px; 
@@ -226,174 +226,174 @@ namespace BeHealthyProject.Server.Controllers
         </div>
     </body>
     </html>"
-            };
+			};
 
-            using (var client = new SmtpClient())
-            {
-                try
-                {
-                    client.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-                    client.Authenticate("behealthydfit@gmail.com", "fbkd ufim mbje rgmh");
-                    client.Send(message);
-                    client.Disconnect(true);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-            }
-            return Ok();
+			using (var client = new SmtpClient())
+			{
+				try
+				{
+					client.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+					client.Authenticate("behealthydfit@gmail.com", "fbkd ufim mbje rgmh");
+					client.Send(message);
+					client.Disconnect(true);
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine(ex.Message);
+				}
+			}
+			return Ok();
 
 
-        }
-        [HttpPut("reset-password")]
-        public async Task<ActionResult> ResetPassword(ResetPasswordRequest request)
-        {
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null)
-                return NotFound();
-            string resetCode = await _cache.GetStringAsync(request.Email);
+		}
+		[HttpPut("reset-password")]
+		public async Task<ActionResult> ResetPassword(ResetPasswordRequest request)
+		{
+			var user = await _userManager.FindByEmailAsync(request.Email);
+			if (user == null)
+				return NotFound();
+			string resetCode = await _cache.GetStringAsync(request.Email);
 
-            if (request.ResetCode == resetCode)
-            {
+			if (request.ResetCode == resetCode)
+			{
 
-                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+				var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-                var result = await _userManager.ResetPasswordAsync(user, resetToken, request.NewPassword);
+				var result = await _userManager.ResetPasswordAsync(user, resetToken, request.NewPassword);
 
-                if (result.Succeeded)
-                {
-                    return Ok(new { message = "Password reset successfully!" });
-                }
-                else
-                {
-                    return BadRequest(new { message = "Error resetting password", errors = result.Errors });
-                }
-            }
+				if (result.Succeeded)
+				{
+					return Ok(new { message = "Password reset successfully!" });
+				}
+				else
+				{
+					return BadRequest(new { message = "Error resetting password", errors = result.Errors });
+				}
+			}
 
-            return BadRequest(new { message = "Invalid reset code." });
+			return BadRequest(new { message = "Invalid reset code." });
 
-        }
-        private JwtSecurityToken GetToken(List<Claim> authClaims)
-        {
-            var authSigninKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+		}
+		private JwtSecurityToken GetToken(List<Claim> authClaims)
+		{
+			var authSigninKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                expires: DateTime.Now.AddHours(3),
-                claims: authClaims,
-                signingCredentials: new SigningCredentials(authSigninKey, SecurityAlgorithms.HmacSha256)
-                );
+			var token = new JwtSecurityToken(
+				issuer: _configuration["Jwt:Issuer"],
+				audience: _configuration["Jwt:Audience"],
+				expires: DateTime.Now.AddHours(3),
+				claims: authClaims,
+				signingCredentials: new SigningCredentials(authSigninKey, SecurityAlgorithms.HmacSha256)
+				);
 
-            return token;
-        }
+			return token;
+		}
 
-        [Authorize(Roles = "User")]
-        [HttpGet("protected-user")]
-        public ActionResult<string> ProtectedEndpoint()
-        {
-            var user = HttpContext.User;
+		[Authorize(Roles = "User")]
+		[HttpGet("protected-user")]
+		public ActionResult<string> ProtectedEndpoint()
+		{
+			var user = HttpContext.User;
 
-            if (user.Identity == null || !user.Identity.IsAuthenticated)
-                return Unauthorized("Invalid Token");
+			if (user.Identity == null || !user.Identity.IsAuthenticated)
+				return Unauthorized("Invalid Token");
 
-            var name = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
-            var role = user.FindFirst(ClaimTypes.Role)?.Value ?? "Unknown";
+			var name = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
+			var role = user.FindFirst(ClaimTypes.Role)?.Value ?? "Unknown";
 
-            return Ok($"Hello {name}, you are authenticated as a {role}!");
-        }
+			return Ok($"Hello {name}, you are authenticated as a {role}!");
+		}
 
-        [Authorize(Roles = "Dietitian")]
-        [HttpGet("protected-dietitian")]
-        public ActionResult<string> ProtectedEndpointDietitian()
-        {
-            var user = HttpContext.User;
+		[Authorize(Roles = "Dietitian")]
+		[HttpGet("protected-dietitian")]
+		public ActionResult<string> ProtectedEndpointDietitian()
+		{
+			var user = HttpContext.User;
 
-            if (user.Identity == null || !user.Identity.IsAuthenticated)
-                return Unauthorized("Invalid Token");
+			if (user.Identity == null || !user.Identity.IsAuthenticated)
+				return Unauthorized("Invalid Token");
 
-            var name = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
-            var role = user.FindFirst(ClaimTypes.Role)?.Value ?? "Unknown";
+			var name = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
+			var role = user.FindFirst(ClaimTypes.Role)?.Value ?? "Unknown";
 
-            return Ok($"Hello {name}, you are authenticated as a {role}!");
-        }
-        [HttpGet("Dietitians")]
-        public async Task<ActionResult<List<ShowDietitianDto>>> GetDietitians()
-        {
-            var dietitians = await _dietitianService.GetDietitians();
-            return dietitians;
-        }
+			return Ok($"Hello {name}, you are authenticated as a {role}!");
+		}
+		[HttpGet("Dietitians")]
+		public async Task<ActionResult<List<ShowDietitianDto>>> GetDietitians()
+		{
+			var dietitians = await _dietitianService.GetDietitians();
+			return dietitians;
+		}
 
-        [HttpPost("create-admin")]
-        public async Task<IActionResult> CreateAdmin()
-        {
-            var existing = await _userManager.FindByNameAsync("admin");
-            if (existing != null)
-                return BadRequest("Admin already exists.");
+		[HttpPost("create-admin")]
+		public async Task<IActionResult> CreateAdmin()
+		{
+			var existing = await _userManager.FindByNameAsync("admin");
+			if (existing != null)
+				return BadRequest("Admin already exists.");
 
-            var admin = new BaseUser
-            {
-                UserName = "admin",
-                Email = "admin@admin.com"
-            };
+			var admin = new BaseUser
+			{
+				UserName = "admin",
+				Email = "admin@admin.com"
+			};
 
-            var result = await _userManager.CreateAsync(admin, "admin123");
+			var result = await _userManager.CreateAsync(admin, "Admin123.");
 
-            if (!result.Succeeded)
-                return BadRequest(result.Errors);
+			if (!result.Succeeded)
+				return BadRequest(result.Errors);
 
-            if (!await _roleManager.RoleExistsAsync("Admin"))
-                await _roleManager.CreateAsync(new IdentityRole("Admin"));
+			if (!await _roleManager.RoleExistsAsync("Admin"))
+				await _roleManager.CreateAsync(new IdentityRole("Admin"));
 
-            await _userManager.AddToRoleAsync(admin, "Admin");
+			await _userManager.AddToRoleAsync(admin, "Admin");
 
-            return Ok("Admin created");
-        }
+			return Ok("Admin created");
+		}
 
-        [HttpPost("signin-admin")]
-        public async Task<IActionResult> SignInForAdmin([FromBody] LoginDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest();
+		[HttpPost("signin-admin")]
+		public async Task<IActionResult> SignInForAdmin([FromBody] LoginDto dto)
+		{
+			if (!ModelState.IsValid)
+				return BadRequest();
 
-            var baseUser = await _userManager.FindByNameAsync(dto.Username);
-            var admin = baseUser as BaseUser;
+			var baseUser = await _userManager.FindByNameAsync(dto.Username);
+			var admin = baseUser as BaseUser;
 
-            if (admin != null && await _userManager.CheckPasswordAsync(admin, dto.Password))
-            {
-                if (!await _roleManager.RoleExistsAsync("Admin"))
-                {
-                    await _roleManager.CreateAsync(new IdentityRole("Admin"));
-                }
+			if (admin != null && await _userManager.CheckPasswordAsync(admin, dto.Password))
+			{
+				if (!await _roleManager.RoleExistsAsync("Admin"))
+				{
+					await _roleManager.CreateAsync(new IdentityRole("Admin"));
+				}
 
-                if (!await _userManager.IsInRoleAsync(admin, "Admin"))
-                {
-                    await _userManager.AddToRoleAsync(admin, "Admin");
-                }
+				if (!await _userManager.IsInRoleAsync(admin, "Admin"))
+				{
+					await _userManager.AddToRoleAsync(admin, "Admin");
+				}
 
-                var userRoles = await _userManager.GetRolesAsync(admin);
+				var userRoles = await _userManager.GetRolesAsync(admin);
 
-                var authClaims = new List<Claim>
+				var authClaims = new List<Claim>
 {
-    new Claim(ClaimTypes.Name, admin.UserName),
-    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-    new Claim(ClaimTypes.NameIdentifier, admin.Id)
+	new Claim(ClaimTypes.Name, admin.UserName),
+	new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+	new Claim(ClaimTypes.NameIdentifier, admin.Id)
 };
 
-                foreach (var role in userRoles)
-                {
-                    authClaims.Add(new Claim(ClaimTypes.Role, role));
-                }
+				foreach (var role in userRoles)
+				{
+					authClaims.Add(new Claim(ClaimTypes.Role, role));
+				}
 
-                var token = GetToken(authClaims);
+				var token = GetToken(authClaims);
 
-                return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo });
-            }
+				return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo });
+			}
 
-            return Unauthorized();
-        }
+			return Unauthorized();
+		}
 
-    }
+	}
 
 }

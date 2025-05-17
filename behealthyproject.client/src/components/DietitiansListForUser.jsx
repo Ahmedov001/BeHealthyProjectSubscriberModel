@@ -20,7 +20,7 @@ const DietitiansListForUser = () => {
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    setSubscribedDietitians(data);
+                    setSubscribedDietitians(data); // this should be array of dietitian IDs
                 } else {
                     alert("Failed to get subscribed dietitians.");
                 }
@@ -60,7 +60,7 @@ const DietitiansListForUser = () => {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": ` Bearer ${token}`,
+                    "Authorization": `Bearer ${token}`,
                 },
                 body: JSON.stringify({ dietitianId, plan }),
             });
@@ -73,6 +73,27 @@ const DietitiansListForUser = () => {
             }
         } catch (error) {
             console.error("Error subscribing:", error);
+        }
+    };
+
+    const handleUnsubscribe = async (dietitianId) => {
+        try {
+            const response = await fetch("https://localhost:7148/api/User/unsubscribe", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ dietitianId }),
+            });
+
+            if (response.ok) {
+                setSubscribedDietitians(prev => prev.filter(id => id !== dietitianId));
+            } else {
+                alert("Failed to unsubscribe.");
+            }
+        } catch (error) {
+            console.error("Error unsubscribing:", error);
         }
     };
 
@@ -96,14 +117,19 @@ const DietitiansListForUser = () => {
                                 <Card.Title>{d.username}</Card.Title>
                                 <Card.Subtitle className="mb-2 text-muted">{d.nickname}</Card.Subtitle>
                                 <Card.Text>
+                                    <strong>ID:</strong> {d.id}<br />
                                     <strong>Experience:</strong> {d.experience} years<br />
                                     <strong>Certification:</strong> {d.certifications?.join(', ')}<br />
                                     <strong>Specialization:</strong> {d.specialization}<br />
                                 </Card.Text>
                                 {subscribedDietitians.includes(d.id) ? (
-                                    <Button className="mt-2" variant="secondary">Unsubscribe</Button>
+                                    <Button className="mt-2" variant="secondary" onClick={() => handleUnsubscribe(d.id)}>
+                                        Unsubscribe
+                                    </Button>
                                 ) : (
-                                    <Button className="mt-2" onClick={() => handleOpenModal(d.id)}>Subscribe</Button>
+                                    <Button className="mt-2" onClick={() => handleOpenModal(d.id)}>
+                                        Subscribe
+                                    </Button>
                                 )}
                             </Card.Body>
                         </Card>
@@ -158,3 +184,4 @@ const DietitiansListForUser = () => {
 };
 
 export default DietitiansListForUser;
+    

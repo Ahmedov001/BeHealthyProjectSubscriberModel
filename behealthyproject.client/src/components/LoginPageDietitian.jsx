@@ -55,7 +55,7 @@ function LoginPageDietitian() {
                 const decoded = jwtDecode(token);
                 const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
                 sessionStorage.setItem("role", role);
-
+                sessionStorage.setItem("userId", result.userId);
                 console.log("Token:", token);
                 console.log("Role:", role);
 

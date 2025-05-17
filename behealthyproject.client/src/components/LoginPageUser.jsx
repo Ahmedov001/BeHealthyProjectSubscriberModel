@@ -3,7 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { useState } from 'react';
 import { Spinner } from 'reactstrap';
 import { Button } from 'reactstrap';
-import { jwtDecode } from "jwt-decode"
+import { jwtDecode } from "jwt-decode";
 import { Snackbar, Alert } from '@mui/material';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
@@ -46,12 +46,13 @@ function LoginPageUser() {
 
             if (response.ok) {
                 const result = await response.json();
-                const token = result.token;
+                const token = result.token; 
                 sessionStorage.setItem("token", token);
 
                 const decoded = jwtDecode(token);
                 const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
                 sessionStorage.setItem("role", role);
+                sessionStorage.setItem("userId", result.userId);
 
                 console.log("Token:", token);
                 console.log("Role:", role);
@@ -107,7 +108,7 @@ function LoginPageUser() {
                     <form>
                         <div className="mb-4">
                             <input
-                                type="email"
+                                type="text"
                                 className="form-control form-control-lg"
                                 placeholder="Username"
                                 onChange={e => setUsername(e.target.value)}
@@ -125,6 +126,8 @@ function LoginPageUser() {
                                 />
                                 <span
                                     onClick={() => setShowPassword(!showPassword)}
+                                    role="button"
+                                    aria-label={showPassword ? "Þifreyi gizle" : "Þifreyi göster"}
                                     style={{
                                         position: "absolute",
                                         top: "50%",
@@ -145,13 +148,13 @@ function LoginPageUser() {
                             {
                                 loading ? (
                                     <Button
-                                        color="succes"
+                                        color="success"
                                         disabled
                                     >
                                         <Spinner size="sm">
                                             Loading...
                                         </Spinner>
-                                        <span>
+                                        <span>  
                                             {' '}Loading
                                         </span>
                                     </Button>
@@ -198,7 +201,7 @@ function LoginPageUser() {
                                             required
                                         />
                                     </div>
-                                    <button type="submit" className="btn btn-success w-100" onClick={goToResetPassword}>Send code</button>
+                                    <button type="submit" className="btn btn-success w-100">Send code</button>
                                 </form>
                             </div>
                         </div>

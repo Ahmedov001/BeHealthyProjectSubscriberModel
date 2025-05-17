@@ -8,5 +8,7 @@ namespace BeHealthyProject.Entities
         public double? Height { get; set; }
         public double? Weight { get; set; }
         public double Balance { get; set; } = 0;
+        public List<Subscriber>? Subscribers { get; set; } = new();
+
     }
 }

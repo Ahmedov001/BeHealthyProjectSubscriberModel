@@ -3,6 +3,7 @@ import axios from 'axios';
 import Select from 'react-select';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import UserNavbar from './UserNavbar';
 
 function UserPage() {
     const [foods, setFoods] = useState([]);
@@ -116,18 +117,8 @@ function UserPage() {
 
     return (
         <div style={{ backgroundColor: '#2f343d' }} className="min-vh-100 text-white p-4">
-            <nav className="navbar navbar-expand navbar-dark mb-4" style={{ backgroundColor: '#1f232b' }}>
-                <div className="container-fluid">
-                    <a className="navbar-brand" href="/userpage">BeHealthy</a>
-                    <ul className="navbar-nav me-auto mb-2 mb-lg-0 d-flex flex-row gap-3">
-                        <li className="nav-item"><a className="nav-link active" href="/userpage">Home</a></li>
-                        <li className="nav-item"><a className="nav-link" href="/userprofile">Profile</a></li>
-                        <li className="nav-item"><a className="nav-link" href="#">Posts</a></li>
-                        <li className="nav-item"><a className="nav-link" href="/dietitianslist">Dietitians</a></li>
-                    </ul>
-                </div>
-            </nav>
 
+            <UserNavbar/>
             <div className="mb-4">
                 <div className="d-flex justify-content-between align-items-center mb-1">
                     <h5 className="mb-0">FOOD DIARY</h5>

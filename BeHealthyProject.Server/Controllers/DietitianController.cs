@@ -149,6 +149,21 @@ namespace BeHealthyProject.Server.Controllers
 			if (user == null) { return NotFound(); }
 			return Ok(new ShowDietitianDto { Specialization = user.Specialization, Experience = user.Experience, Certifications = user.Certifications, Nickname = user.Nickname, Username = user.UserName, isComplete=user.IsCompleteProfile, Price = user.Price, hasProgram = user.HasProgram,Status=user.Status});
 		}
+		[HttpGet("get-subscribed-users")]
+		public async Task<ActionResult<List<string>>> GetSubscribedUsers()
+		{
+			var dietitianId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (string.IsNullOrEmpty(dietitianId))
+			{
+				return Unauthorized("Invalid token.");
+			}
 
+			var userIds = await _context.Subscribers
+				.Where(s => s.DietitianId == dietitianId)
+				.Select(s => s.SubscriberId)
+				.ToListAsync();
+
+			return Ok(userIds);
+		}
 	}
 }
