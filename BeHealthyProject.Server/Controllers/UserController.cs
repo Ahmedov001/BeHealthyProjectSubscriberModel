@@ -132,12 +132,22 @@ namespace BeHealthyProject.Server.Controllers
 
 			var dietitianIds = await _subscribeService.GetSubscribedDietitians(userId);
 
-			
-			
-			return Ok(dietitianIds);
+			var dietitians = _userManager.Users
+	   .OfType<Dietitian>() // Assuming `Dietitian : BaseUser`
+	   .Where(d => dietitianIds.Contains(d.Id))
+	   .Select(d => new SubscribedDietitianDto
+	   {
+		   Id = d.Id,
+		   Username = d.UserName,
+		   Nickname = d.Nickname
+	   })
+	   .ToList();
+
+			return Ok(dietitians);
+
 		}
 
-		
+
 
 
 		[HttpGet("check-availability")]

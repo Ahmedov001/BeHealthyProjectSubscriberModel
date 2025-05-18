@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Container, Row, Col, ListGroup, Form, Button, Card } from 'react-bootstrap';
 import * as signalR from '@microsoft/signalr';
-import { jwtDecode } from "jwt-decode";
 import UserNavbar from './UserNavbar';
 
 const UserChatPage = () => {
@@ -12,16 +11,12 @@ const UserChatPage = () => {
     const [connection, setConnection] = useState(null);
     const messagesEndRef = useRef(null);
 
-
     const token = sessionStorage.getItem("token");
     const userId = sessionStorage.getItem("userId");
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
-
-
-
 
     useEffect(() => {
         fetch("https://localhost:7148/api/User/get-subscribed-dietitians", {
@@ -32,7 +27,7 @@ const UserChatPage = () => {
             }
         })
             .then(res => res.json())
-            .then(data => setSubscribedDietitians(data), console.log)
+            .then(data => setSubscribedDietitians(data))
             .catch(err => console.error("Failed to load dietitians", err));
     }, [token]);
 
@@ -59,13 +54,12 @@ const UserChatPage = () => {
             connection.off("ReceiveMessage");
 
             connection.on("ReceiveMessage", (senderId, message) => {
-                console.log("New Message:", senderId, message);
-
-                if (senderId === selectedDietitian || senderId === userId) {
+                if (!selectedDietitian) return;
+                if (senderId === selectedDietitian.id || senderId === userId) {
                     setMessages(prev => [
                         ...prev,
                         {
-                            sender: senderId === userId ? "me" : senderId,
+                            sender: senderId === userId ? "me" : "dietitian",
                             content: message
                         }
                     ]);
@@ -76,14 +70,14 @@ const UserChatPage = () => {
 
     useEffect(() => {
         if (selectedDietitian && userId) {
-            fetch(`https://localhost:7148/api/Chat/get-messages?user1Id=${userId}&user2Id=${selectedDietitian}`, {
+            fetch(`https://localhost:7148/api/Chat/get-messages?user1Id=${userId}&user2Id=${selectedDietitian.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
                 .then(res => res.json())
                 .then(data => {
                     if (Array.isArray(data)) {
                         setMessages(data.map(m => ({
-                            sender: m.senderId === userId ? "me" : m.senderId,
+                            sender: m.senderId === userId ? "me" : "dietitian",
                             content: m.message
                         })));
                     } else {
@@ -92,11 +86,12 @@ const UserChatPage = () => {
                 })
                 .catch(err => console.error("Error fetching messages:", err));
         }
-    }, [selectedDietitian]);    
+    }, [selectedDietitian]);
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!messageText || !selectedDietitian) return;
+
         await fetch("https://localhost:7148/api/Chat/send-message", {
             method: "POST",
             headers: {
@@ -104,7 +99,7 @@ const UserChatPage = () => {
                 Authorization: `Bearer ${token}`
             },
             body: JSON.stringify({
-                receiverId: selectedDietitian,
+                receiverId: selectedDietitian.id,
                 message: messageText
             })
         });
@@ -118,58 +113,57 @@ const UserChatPage = () => {
         setMessages([]);
     };
 
-    return (<>
-        <UserNavbar />
-        <Container className="mt-4">
-            <Row>
-                <Col md={4}>
-                    <h5>Your Subscriptions</h5>
-                    <ListGroup>
-                        {subscribedDietitians.map(d => (
-                            <ListGroup.Item
-                                action
-                                key={d}
-                                active={selectedDietitian?.id === d.id}
-                                onClick={() => handleSelectDietitian(d)}
-                            >
-                                {d}
-                            </ListGroup.Item>
-                        ))}
-                    </ListGroup>
-                </Col>
-                <Col md={8}>
-                    <h5>Chat with {selectedDietitian?.username}</h5>
-                    {selectedDietitian ? (
-                        <Card>
-                            <Card.Body style={{ height: "400px", overflowY: "auto" }}>
-                                {messages
-                                    .filter(msg => msg.sender === "me" || msg.sender === selectedDietitian)
-                                    .map((msg, index) => (
+    return (
+        <>
+            <UserNavbar />
+            <Container className="mt-4">
+                <Row>
+                    <Col md={4}>
+                        <h5>Your Subscriptions</h5>
+                        <ListGroup>
+                            {subscribedDietitians.map(d => (
+                                <ListGroup.Item
+                                    action
+                                    key={d.id}
+                                    active={selectedDietitian?.id === d.id}
+                                    onClick={() => handleSelectDietitian(d)}
+                                >
+                                    {d.username}
+                                </ListGroup.Item>
+                            ))}
+                        </ListGroup>
+                    </Col>
+                    <Col md={8}>
+                        <h5>Chat with {selectedDietitian?.nickname || "..."}</h5>
+                        {selectedDietitian ? (
+                            <Card>
+                                <Card.Body style={{ height: "400px", overflowY: "auto" }}>
+                                    {messages.map((msg, index) => (
                                         <div key={index} className={msg.sender === "me" ? "text-end" : "text-start"}>
-                                            <strong>{msg.sender === "me" ? "You" : "Dietitian"}:</strong> {msg.content}
+                                            <strong>{msg.sender === "me" ? "You" : selectedDietitian.nickname}:</strong> {msg.content}
                                         </div>
                                     ))}
-                                <div ref={messagesEndRef}></div>
-                            </Card.Body>
-                            <Card.Footer>
-                                <Form onSubmit={handleSendMessage} className="d-flex">
-                                    <Form.Control
-                                        type="text"
-                                        placeholder="Type your message..."
-                                        value={messageText}
-                                        onChange={(e) => setMessageText(e.target.value)}
-                                    />
-                                    <Button type="submit" className="ms-2">Send</Button>
-                                </Form>
-                            </Card.Footer>
-                        </Card>
-                    ) : (
-                        <p>Select a dietitian to chat with.</p>
-                    )}
-                </Col>
-            </Row>
-        </Container>
-    </>
+                                    <div ref={messagesEndRef}></div>
+                                </Card.Body>
+                                <Card.Footer>
+                                    <Form onSubmit={handleSendMessage} className="d-flex">
+                                        <Form.Control
+                                            type="text"
+                                            placeholder="Type your message..."
+                                            value={messageText}
+                                            onChange={(e) => setMessageText(e.target.value)}
+                                        />
+                                        <Button type="submit" className="ms-2">Send</Button>
+                                    </Form>
+                                </Card.Footer>
+                            </Card>
+                        ) : (
+                            <p>Select a dietitian to chat with.</p>
+                        )}
+                    </Col>
+                </Row>
+            </Container>
+        </>
     );
 };
 
