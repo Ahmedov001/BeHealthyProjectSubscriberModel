@@ -90,6 +90,7 @@ function LoginPageDietitian() {
         if (response.ok) {
             setSnackbarMessage('Sent mail successful!');
             setSnackbarSeverity('success');
+            navigate("/resetpassword")
             setOpenSnackbar(true);
             setShowModal(false);
         } else {

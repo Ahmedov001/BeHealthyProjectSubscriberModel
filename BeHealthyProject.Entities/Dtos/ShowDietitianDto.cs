@@ -9,7 +9,7 @@ namespace BeHealthyProject.Entities.Dtos
 	public class ShowDietitianDto
 	{
         public string Id { get; set; }
-        public string? Username { get; set; }
+        public string Username { get; set; }
 		public string? Nickname { get; set; }
         public double? Price { get; set; }
         public string? Specialization { get; set; }
@@ -17,6 +17,6 @@ namespace BeHealthyProject.Entities.Dtos
 		public int? Experience { get; set; }
 		public bool? isComplete { get; set; } = false;
 		public bool? hasProgram { get; set; } = false;
-        public DietitianStatus? Status { get; set; }
+        public DietitianStatus Status { get; set; }
     }
 }

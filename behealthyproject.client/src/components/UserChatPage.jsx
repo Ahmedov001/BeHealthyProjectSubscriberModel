@@ -92,7 +92,7 @@ const UserChatPage = () => {
                 })
                 .catch(err => console.error("Error fetching messages:", err));
         }
-    }, [selectedDietitian]);
+    }, [selectedDietitian]);    
 
     const handleSendMessage = async (e) => {
         e.preventDefault();

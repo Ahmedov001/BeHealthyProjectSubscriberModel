@@ -132,18 +132,9 @@ namespace BeHealthyProject.Server.Controllers
 
 			var dietitianIds = await _subscribeService.GetSubscribedDietitians(userId);
 
-			var dietitianList = new List<ShowDietitianDto>();
-			foreach (var item in dietitianIds)
-			{
-				var dietitian = await _userManager.FindByIdAsync(item) as Dietitian;
-				dietitianList.Add(new ShowDietitianDto
-				{
-					Id = dietitian.Id,
-					Username = dietitian.UserName
-				}) ;
-			}
 			
-			return Ok(dietitianList);
+			
+			return Ok(dietitianIds);
 		}
 
 		
