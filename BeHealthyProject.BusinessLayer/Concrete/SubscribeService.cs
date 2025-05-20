@@ -59,19 +59,15 @@ public class SubscribeService : ISubscribeService
 		return subscription;
 	}
 
-	public async Task<List<User>> GetSubscribers()
+	public async Task<List<string>> GetSubscribers(string dietitianId)
 	{
 		var subscriberIds = await _dbContext.Subscribers
+			.Where(s=> s.DietitianId ==dietitianId)
 			.Select(s => s.SubscriberId)
-			.Distinct()
 			.ToListAsync();
 
-		var users = await _userManager.Users
-			.OfType<User>()
-			.Where(u => subscriberIds.Contains(u.Id))
-			.ToListAsync();
 
-		return users;
+		return subscriberIds;
 	}
 
 	public async Task<List<string>> GetSubscribedDietitians(string userId)

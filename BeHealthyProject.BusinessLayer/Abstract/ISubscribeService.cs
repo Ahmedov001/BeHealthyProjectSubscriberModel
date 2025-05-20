@@ -12,7 +12,7 @@ namespace BeHealthyProject.BusinessLayer.Abstract
 	{
 		Task<Subscriber> Subscribe(string dietitianId, string userId, string plan);
 		Task<Subscriber> Unsubscribe(string dietitianId, string userId);
-		Task<List<User>> GetSubscribers(); 
+		Task<List<string>> GetSubscribers(string dietitianId); 
 		Task<List<string>> GetSubscribedDietitians(string userId); 
 	}
 }	

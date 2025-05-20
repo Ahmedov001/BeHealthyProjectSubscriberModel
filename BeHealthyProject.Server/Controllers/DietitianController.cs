@@ -159,10 +159,11 @@ namespace BeHealthyProject.Server.Controllers
 			if (userId == null)
 				return Unauthorized("User not found.");
 
-			var userIds = await _subscribeService.GetSubscribers();
+			var takenUsers = await _subscribeService.GetSubscribers(userId);
 
 			var users = _userManager.Users
 			   .OfType<User>()
+			   .Where(a=> takenUsers.Contains(a.Id))
 			   .Select(d => new ShowUserDto
 			   {
 				   Id = d.Id,

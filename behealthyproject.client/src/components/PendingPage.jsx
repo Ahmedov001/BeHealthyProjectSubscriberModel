@@ -1,7 +1,36 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { HubConnectionBuilder } from '@microsoft/signalr';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const PendingPage = () => {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const connection = new HubConnectionBuilder()
+            .withUrl("https://localhost:7148/hub/notifications", {
+                accessTokenFactory: () => sessionStorage.getItem("token") 
+            })
+            .withAutomaticReconnect()
+            .build();
+
+        connection.start().then(() => {
+            console.log("SignalR connected");
+
+            connection.on("ReceiveApproval", (status) => {
+                if (status === "approved") {
+                    navigate("/dietitianpage");
+                } else if (status === "declined") {
+                    navigate("/declinedpage");
+                }
+            });
+        });
+
+        return () => {
+            connection.stop();
+        };
+    }, []);
     return (
         <div className="d-flex justify-content-center align-items-center min-vh-100 bg-warning bg-opacity-10">
             <div className="text-center border p-5 rounded shadow bg-white">

@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using BeHealthyProject.BusinessLayer.Hubs;
 
 namespace BeHealthyProject.Server.Controllers
 {
@@ -13,13 +15,16 @@ namespace BeHealthyProject.Server.Controllers
     public class AdminController : ControllerBase
     {
         private readonly UserManager<BaseUser> _userManager;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public AdminController(UserManager<BaseUser> userManager)
-        {
-            _userManager = userManager;
-        }
 
-        [HttpGet("get-dietitians")]
+		public AdminController(UserManager<BaseUser> userManager, IHubContext<NotificationHub> hubContext)
+		{
+			_userManager = userManager;
+			_hubContext = hubContext;
+		}
+
+		[HttpGet("get-dietitians")]
         public async Task<ActionResult> GetAllDietitians()
         {
             var dietitians = await _userManager.GetUsersInRoleAsync("Dietitian");
@@ -59,8 +64,10 @@ namespace BeHealthyProject.Server.Controllers
 
             dietitian.Status = DietitianStatus.Accepted;
             await _userManager.UpdateAsync(dietitian);
+			await _hubContext.Clients.User(id).SendAsync("ReceiveApproval", "approved");
 
-            return Ok(new { message = "Dietitian approved!" });
+			return Ok(new { message = "Dietitian approved!" });
+
         }
 
         [HttpPost("decline/{id}")]
@@ -78,8 +85,9 @@ namespace BeHealthyProject.Server.Controllers
 
             dietitian.Status = DietitianStatus.Declined;
             await _userManager.UpdateAsync(dietitian);
+			await _hubContext.Clients.User(id).SendAsync("ReceiveApproval", "declined");
 
-            return Ok(new { message = "Dietitian declined!" });
+			return Ok(new { message = "Dietitian declined!" });
         }
 
     }

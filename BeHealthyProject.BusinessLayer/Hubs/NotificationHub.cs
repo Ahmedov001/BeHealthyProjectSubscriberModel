@@ -21,7 +21,7 @@ namespace BeHealthyProject.BusinessLayer.Hubs
 		public override Task OnConnectedAsync()
 		{
 			var userId = Context.UserIdentifier;
-			Console.WriteLine($"[SignalR] Yeni bağlantı: {userId}");
+			Console.WriteLine($"[SignalR] New Connection: {userId}");
 
 			return base.OnConnectedAsync();
 		}
