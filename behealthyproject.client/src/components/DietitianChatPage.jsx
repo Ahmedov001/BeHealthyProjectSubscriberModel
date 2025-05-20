@@ -20,22 +20,39 @@ const DietitianChatPage = () => {
     }, [messages]);
 
     useEffect(() => {
-        fetch("https://localhost:7148/api/Dietitian/get-subscribed-users", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(data => setSubscribers(data))
-            .catch(err => console.error("Failed to load users", err));
-    }, [token]);
+        const fetchSubscribedUsers = async () => {
+            try {
+                const response = await fetch("https://localhost:7148/api/Dietitian/get-subscribed-users", {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
 
+                if (!response.ok) {
+                    throw new Error("Failed to fetch users");
+                }
+
+                const data = await response.json();
+                setSubscribers(data);
+            } catch (err) {
+                console.error("Failed to load users:", err);
+            }
+        };
+
+        if (token) {
+            fetchSubscribedUsers();
+        }
+    }, [token]);
     useEffect(() => {
         const newConnection = new signalR.HubConnectionBuilder()
-            .withUrl("https://localhost:7148/hub/notifications", { accessTokenFactory: () => token })
+            .withUrl("https://localhost:7148/hub/notifications", {
+                accessTokenFactory: () => token
+            })
             .withAutomaticReconnect()
             .build();
 
         setConnection(newConnection);
-    }, [token]);    
+    }, [token]);
 
     useEffect(() => {
         if (connection) {
@@ -51,7 +68,7 @@ const DietitianChatPage = () => {
             connection.on("ReceiveMessage", (senderId, message) => {
                 console.log("New Message:", senderId, message);
 
-                if (senderId === selectedUser || senderId === userId) {
+                if (senderId === selectedUser.id || senderId === userId) {
                     setMessages(prev => [
                         ...prev,
                         {
@@ -66,7 +83,7 @@ const DietitianChatPage = () => {
 
     useEffect(() => {
         if (selectedUser && dietitianId) {
-            fetch(`https://localhost:7148/api/Chat/get-messages?user1Id=${dietitianId}&user2Id=${selectedUser}`, {
+            fetch(`https://localhost:7148/api/Chat/get-messages?user1Id=${dietitianId}&user2Id=${selectedUser.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
                 .then(res => res.json())
@@ -95,7 +112,7 @@ const DietitianChatPage = () => {
                 Authorization: `Bearer ${token}`
             },
             body: JSON.stringify({
-                receiverId: selectedUser,
+                receiverId: selectedUser.id,
                 message: messageText
             })
         });
@@ -106,55 +123,55 @@ const DietitianChatPage = () => {
 
     return (
         <>
-            <DietitianNavbar/>
-        <Container className="mt-4">
-            <Row>
-                <Col md={4}>
-                    <h5>Your Clients</h5>
-                    <ListGroup>
-                        {subscribers.map(u => (
-                            <ListGroup.Item
-                                action
-                                key={u}
-                                active={selectedUser === u}
-                                onClick={() => setSelectedUser(u)}
-                            >
-                                {u}
-                            </ListGroup.Item>
-                        ))}
-                    </ListGroup>
-                </Col>
-                <Col md={8}>
-                    <h5>Chat</h5>
-                    {selectedUser ? (
-                        <Card>
-                            <Card.Body style={{ height: "400px", overflowY: "auto" }}>
-                                {messages
-                                    .filter(msg => msg.sender === "me" || msg.sender === selectedUser)
-                                    .map((msg, index) => (
-                                        <div key={index} className={msg.sender === "me" ? "text-end" : "text-start"}>
-                                            <strong>{msg.sender === "me" ? "You" : "Client"}:</strong> {msg.content}
-                                        </div>
-                                    ))}
-                                <div ref={messagesEndRef}></div>
-                            </Card.Body>
-                            <Card.Footer>
-                                <Form className="d-flex" onSubmit={handleSendMessage}>
-                                    <Form.Control
-                                        type="text"
-                                        placeholder="Type your message..."
-                                        value={messageText}
-                                        onChange={(e) => setMessageText(e.target.value)}
-                                    />
-                                    <Button type="submit" className="ms-2">Send</Button>
-                                </Form>
-                            </Card.Footer>
-                        </Card>
-                    ) : (
-                        <p>Select a user to chat with.</p>
-                    )}
-                </Col>
-            </Row>
+            <DietitianNavbar />
+            <Container className="mt-4">
+                <Row>
+                    <Col md={4}>
+                        <h5>Your Clients</h5>
+                        <ListGroup>
+                            {subscribers.map(u => (
+                                <ListGroup.Item
+                                    action
+                                    key={u.id}
+                                    active={selectedUser === u}
+                                    onClick={() => setSelectedUser(u)}
+                                >
+                                    {u.username}
+                                </ListGroup.Item>
+                            ))}
+                        </ListGroup>
+                    </Col>
+                    <Col md={8}>
+                        <h5>Chat</h5>
+                        {selectedUser ? (
+                            <Card>
+                                <Card.Body style={{ height: "400px", overflowY: "auto" }}>
+                                    {messages
+                                        .filter(msg => msg.sender === "me" || msg.sender === selectedUser.id)
+                                        .map((msg, index) => (
+                                            <div key={index} className={msg.sender === "me" ? "text-end" : "text-start"}>
+                                                <strong>{msg.sender === "me" ? "You" : selectedUser.username}:</strong> {msg.content}
+                                            </div>
+                                        ))}
+                                    <div ref={messagesEndRef}></div>
+                                </Card.Body>
+                                <Card.Footer>
+                                    <Form className="d-flex" onSubmit={handleSendMessage}>
+                                        <Form.Control
+                                            type="text"
+                                            placeholder="Type your message..."
+                                            value={messageText}
+                                            onChange={(e) => setMessageText(e.target.value)}
+                                        />
+                                        <Button type="submit" className="ms-2">Send</Button>
+                                    </Form>
+                                </Card.Footer>
+                            </Card>
+                        ) : (
+                            <p>Select a user to chat with.</p>
+                        )}
+                    </Col>
+                </Row>
             </Container>
         </>
     );

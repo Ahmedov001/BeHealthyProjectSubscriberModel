@@ -65,7 +65,6 @@ function DietitianPage() {
                                 <th>#</th>
                                 <th>Username</th>
                                 <th>Email</th>
-                                <th>Subscription Date</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -74,7 +73,6 @@ function DietitianPage() {
                                     <th scope="row">{index + 1}</th>
                                     <td>{user.username}</td>
                                     <td>{user.email}</td>
-                                    <td>{new Date(user.subscriptionDate).toLocaleDateString()}</td>
                                 </tr>
                             ))}
                         </tbody>

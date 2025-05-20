@@ -18,6 +18,7 @@ const UserChatPage = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // Diðer diyetisyenleri ve abone olduklarýný çekmek
     useEffect(() => {
         fetch("https://localhost:7148/api/User/get-subscribed-dietitians", {
             method: "GET",
@@ -28,7 +29,7 @@ const UserChatPage = () => {
         })
             .then(res => res.json())
             .then(data => setSubscribedDietitians(data))
-            .catch(err => console.error("Failed to load dietitians", err));
+            .catch(err => console.error("Diyetisyenler yüklenemedi", err));
     }, [token]);
 
     useEffect(() => {
@@ -48,18 +49,18 @@ const UserChatPage = () => {
                 connection
                     .start()
                     .then(() => console.log("SignalR connected"))
-                    .catch(err => console.error("SignalR connection fail:", err));
+                    .catch(err => console.error("SignalR connection failed:", err));
             }
 
             connection.off("ReceiveMessage");
 
-            connection.on("ReceiveMessage", (senderId, message) => {
-                if (!selectedDietitian) return;
+            connection.on("ReceiveMessage", (senderId, message) => { 
+
                 if (senderId === selectedDietitian.id || senderId === userId) {
                     setMessages(prev => [
                         ...prev,
                         {
-                            sender: senderId === userId ? "me" : "dietitian",
+                            sender: senderId === userId ? "me" : senderId,
                             content: message
                         }
                     ]);
@@ -77,7 +78,7 @@ const UserChatPage = () => {
                 .then(data => {
                     if (Array.isArray(data)) {
                         setMessages(data.map(m => ({
-                            sender: m.senderId === userId ? "me" : "dietitian",
+                            sender: m.senderId === userId ? "me" : m.senderId,
                             content: m.message
                         })));
                     } else {
@@ -92,7 +93,7 @@ const UserChatPage = () => {
         e.preventDefault();
         if (!messageText || !selectedDietitian) return;
 
-        await fetch("https://localhost:7148/api/Chat/send-message", {
+        await fetch("https://localhost:7148/api/chat/send-message", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -119,7 +120,7 @@ const UserChatPage = () => {
             <Container className="mt-4">
                 <Row>
                     <Col md={4}>
-                        <h5>Your Subscriptions</h5>
+                        <h5>Subscribed Dietitians</h5>
                         <ListGroup>
                             {subscribedDietitians.map(d => (
                                 <ListGroup.Item
@@ -134,13 +135,13 @@ const UserChatPage = () => {
                         </ListGroup>
                     </Col>
                     <Col md={8}>
-                        <h5>Chat with {selectedDietitian?.nickname || "..."}</h5>
+                        <h5>Chat with {selectedDietitian?.nickname}</h5>
                         {selectedDietitian ? (
                             <Card>
                                 <Card.Body style={{ height: "400px", overflowY: "auto" }}>
                                     {messages.map((msg, index) => (
                                         <div key={index} className={msg.sender === "me" ? "text-end" : "text-start"}>
-                                            <strong>{msg.sender === "me" ? "You" : selectedDietitian.nickname}:</strong> {msg.content}
+                                            <strong>{msg.sender === "me" ? "You" : selectedDietitian.username}:</strong> {msg.content}
                                         </div>
                                     ))}
                                     <div ref={messagesEndRef}></div>

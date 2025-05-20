@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace BeHealthyProject.Server.Controllers
@@ -84,9 +85,9 @@ namespace BeHealthyProject.Server.Controllers
 		}
 
 		[HttpGet("get-dietitians")]
-		public Task<List<ShowDietitianDto>> GetDietitians()
+		public async Task<List<ShowDietitianDto>> GetDietitians()
 		{
-			var dietitians = _dietitianService.GetDietitians();
+			var dietitians = await _dietitianService.GetDietitians();
 			return dietitians;
 		}
 		[HttpPost("subscribe")]
@@ -132,8 +133,8 @@ namespace BeHealthyProject.Server.Controllers
 
 			var dietitianIds = await _subscribeService.GetSubscribedDietitians(userId);
 
-			var dietitians = _userManager.Users
-	   .OfType<Dietitian>() // Assuming `Dietitian : BaseUser`
+			var dietitians = await _userManager.Users
+	   .OfType<Dietitian>() 
 	   .Where(d => dietitianIds.Contains(d.Id))
 	   .Select(d => new SubscribedDietitianDto
 	   {
@@ -141,7 +142,7 @@ namespace BeHealthyProject.Server.Controllers
 		   Username = d.UserName,
 		   Nickname = d.Nickname
 	   })
-	   .ToList();
+	   .ToListAsync();
 
 			return Ok(dietitians);
 

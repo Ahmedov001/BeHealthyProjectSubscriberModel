@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Button, Modal } from 'react-bootstrap';
-import DietitianNavbar from './DietitianNavbar';
 import UserNavbar from './UserNavbar';
 
 const DietitiansListForUser = () => {
@@ -23,6 +22,7 @@ const DietitiansListForUser = () => {
                 if (response.ok) {
                     const data = await response.json();
                     setSubscribedDietitians(data);
+                    console.log(data)
                 } else {
                     alert("Failed to get subscribed dietitians.");
                 }
@@ -44,6 +44,7 @@ const DietitiansListForUser = () => {
                 if (response.ok) {
                     const data = await response.json();
                     setDietitians(data);
+                    console.log(data)
                     fetchSubscribedDietitians();
                 } else {
                     alert("Failed to get dietitians.");
@@ -73,11 +74,11 @@ const DietitiansListForUser = () => {
             } else {
                 alert("Failed to subscribe.");
             }
-        } catch (error) {
+        } catch (error) {                
             console.error("Error subscribing:", error);
         }
     };
-
+    console.log(subscribedDietitians)
     const handleUnsubscribe = async (dietitianId) => {
         try {
             const response = await fetch("https://localhost:7148/api/User/unsubscribe", {
@@ -112,7 +113,7 @@ const DietitiansListForUser = () => {
     return (
         <>
             <UserNavbar />
-            <Container className="mt-5" >
+            <Container className="mt-5">
                 <Row>
                     {dietitians.map(d => (
                         <Col key={d.id} sm={12} md={6} lg={4} className="mb-4">
@@ -125,7 +126,7 @@ const DietitiansListForUser = () => {
                                         <strong>Certification:</strong> {d.certifications?.join(', ')}<br />
                                         <strong>Specialization:</strong> {d.specialization}<br />
                                     </Card.Text>
-                                    {subscribedDietitians.includes(d.id) ? (
+                                    {subscribedDietitians.some(dietitian => dietitian.id === d.id) ? (
                                         <Button className="mt-2" variant="secondary" onClick={() => handleUnsubscribe(d.id)}>
                                             Unsubscribe
                                         </Button>
@@ -153,10 +154,6 @@ const DietitiansListForUser = () => {
                                 {
                                     name: "Premium",
                                     features: ["6 hours daily communication", "Access to all diet programs"],
-                                },
-                                {
-                                    name: "Premium+",
-                                    features: ["All features included", "Private one-on-one coaching", "Instant messaging support"],
                                 }
                             ].map(plan => (
                                 <Col key={plan.name} md={4}>
@@ -184,7 +181,6 @@ const DietitiansListForUser = () => {
                 </Modal>
             </Container>
         </>
-
     );
 };
 
