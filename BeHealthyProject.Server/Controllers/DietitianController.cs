@@ -152,6 +152,7 @@ namespace BeHealthyProject.Server.Controllers
 			if (user == null) { return NotFound(); }
 			return Ok(new ShowDietitianDto { Specialization = user.Specialization, Experience = user.Experience, Certifications = user.Certifications, Nickname = user.Nickname, Username = user.UserName, isComplete = user.IsCompleteProfile, Price = user.Price, hasProgram = user.HasProgram, Status = user.Status });
 		}
+
 		[HttpGet("get-subscribed-users")]
 		public async Task<ActionResult> GetSubscribedUsers()
 		{
@@ -179,5 +180,49 @@ namespace BeHealthyProject.Server.Controllers
 			return Ok(users);
 
 		}
-	}
+
+        
+        [HttpPost("upload-certificates")]
+        [DisableRequestSizeLimit]
+        public async Task<IActionResult> UploadCertificates([FromForm] List<IFormFile> files)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var dietitian = await _context.Dietitians
+                .FirstOrDefaultAsync(d => d.Id == userId);
+
+            if (dietitian == null) return NotFound();
+
+            var uploadFolder = Path.Combine("wwwroot", "certificates", userId);
+            Directory.CreateDirectory(uploadFolder);
+
+            var uploadedPaths = new List<string>();
+
+            foreach (var file in files)
+            {
+                var uniqueName = $"{Guid.NewGuid()}_{file.FileName}";
+                var filePath = Path.Combine(uploadFolder, uniqueName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var relativePath = $"/certificates/{userId}/{uniqueName}";
+                uploadedPaths.Add(relativePath);
+
+                _context.DietitianCertificates.Add(new DietitianCertificate
+                {
+                    DietitianId = userId,
+                    FilePath = relativePath
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Certificates uploaded successfully", paths = uploadedPaths });
+        }
+
+
+    }
 }

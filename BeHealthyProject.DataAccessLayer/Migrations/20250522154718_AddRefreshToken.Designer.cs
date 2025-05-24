@@ -4,6 +4,7 @@ using BeHealthyProject.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BeHealthyProject.Server.Migrations
 {
     [DbContext(typeof(BeHealthyDbContext))]
-    partial class BeHealthyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250522154718_AddRefreshToken")]
+    partial class AddRefreshToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -145,29 +148,6 @@ namespace BeHealthyProject.Server.Migrations
                     b.HasIndex("DietitianId");
 
                     b.ToTable("DietPrograms");
-                });
-
-            modelBuilder.Entity("BeHealthyProject.Entities.DietitianCertificate", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("DietitianId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DietitianId");
-
-                    b.ToTable("DietitianCertificates");
                 });
 
             modelBuilder.Entity("BeHealthyProject.Entities.Meal", b =>
@@ -512,17 +492,6 @@ namespace BeHealthyProject.Server.Migrations
                     b.Navigation("Dietitian");
                 });
 
-            modelBuilder.Entity("BeHealthyProject.Entities.DietitianCertificate", b =>
-                {
-                    b.HasOne("BeHealthyProject.Entities.Dietitian", "Dietitian")
-                        .WithMany("Certificates")
-                        .HasForeignKey("DietitianId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Dietitian");
-                });
-
             modelBuilder.Entity("BeHealthyProject.Entities.Meal", b =>
                 {
                     b.HasOne("BeHealthyProject.Entities.DietProgram", null)
@@ -622,8 +591,6 @@ namespace BeHealthyProject.Server.Migrations
 
             modelBuilder.Entity("BeHealthyProject.Entities.Dietitian", b =>
                 {
-                    b.Navigation("Certificates");
-
                     b.Navigation("DietPrograms");
 
                     b.Navigation("Subscribers");

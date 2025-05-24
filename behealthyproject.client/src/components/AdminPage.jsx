@@ -72,14 +72,20 @@ const AdminPage = () => {
                                 {dietitian.nickname && <h6 className="card-subtitle mb-2 text-muted">{dietitian.nickname}</h6>}
                                 {dietitian.specialization && <p className="card-text"><strong>Specialization:</strong> {dietitian.specialization}</p>}
                                 {dietitian.experience !== null && <p className="card-text"><strong>Experience:</strong> {dietitian.experience} years</p>}
-                                {dietitian.certifications.length > 0 && (
+                                {dietitian.certificateImagePaths.length > 0 && (
                                     <div className="mb-2">
-                                        <strong>Certifications:</strong>
-                                        <ul className="list-unstyled mb-0">
-                                            {dietitian.certifications.map((cert, idx) => (
-                                                <li key={idx}>- {cert}</li>
+                                        <strong>Uploaded Certificates:</strong>
+                                        <div className="d-flex flex-wrap gap-2">
+                                            {dietitian.certificateImagePaths.map((path, idx) => (
+                                                <img
+                                                    key={idx}
+                                                    src={`https://localhost:7148/${path}`}
+                                                    alt={`Certificate ${idx + 1}`}
+                                                    className="img-thumbnail"
+                                                    style={{ maxWidth: "100px", maxHeight: "100px" }}
+                                                />
                                             ))}
-                                        </ul>
+                                        </div>
                                     </div>
                                 )}
                                 <div className="mt-auto d-flex justify-content-between">

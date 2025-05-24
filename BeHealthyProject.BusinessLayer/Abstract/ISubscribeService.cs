@@ -10,9 +10,11 @@ namespace BeHealthyProject.BusinessLayer.Abstract
 {
 	public interface ISubscribeService
 	{
-		Task<Subscriber> Subscribe(string dietitianId, string userId, string plan);
-		Task<Subscriber> Unsubscribe(string dietitianId, string userId);
+        Task<(bool Success, string Message)> Subscribe(string userId, string dietitianId, string plan);
+
+        Task<Subscriber> Unsubscribe(string dietitianId, string userId);
 		Task<List<string>> GetSubscribers(string dietitianId); 
-		Task<List<string>> GetSubscribedDietitians(string userId); 
-	}
+		Task<List<string>> GetSubscribedDietitians(string userId);
+        Task<List<DietProgram>> GetSubscribedDietProgramsAsync(string userId);
+    }
 }	

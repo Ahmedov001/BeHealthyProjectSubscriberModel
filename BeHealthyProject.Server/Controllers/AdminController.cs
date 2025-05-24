@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using BeHealthyProject.BusinessLayer.Hubs;
+using BeHealthyProject.Server.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace BeHealthyProject.Server.Controllers
 {
@@ -16,36 +18,40 @@ namespace BeHealthyProject.Server.Controllers
     {
         private readonly UserManager<BaseUser> _userManager;
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly BeHealthyDbContext _context;
 
+        public AdminController(UserManager<BaseUser> userManager, IHubContext<NotificationHub> hubContext, BeHealthyDbContext context)
+        {
+            _userManager = userManager;
+            _hubContext = hubContext;
+            _context = context;
+        }
 
-		public AdminController(UserManager<BaseUser> userManager, IHubContext<NotificationHub> hubContext)
-		{
-			_userManager = userManager;
-			_hubContext = hubContext;
-		}
-
-		[HttpGet("get-dietitians")]
+        [HttpGet("get-dietitians")]
         public async Task<ActionResult> GetAllDietitians()
         {
-            var dietitians = await _userManager.GetUsersInRoleAsync("Dietitian");
-            var dtoList = dietitians
+            var dietitians = await _context.Dietitians
                 .OfType<Dietitian>()
-                .Select(d => new ShowDietitianDto
-                {
-                    Id = d.Id,
-                    Specialization = d.Specialization,
-                    Experience = d.Experience,
-                    Certifications = d.Certifications,
-                    Nickname = d.Nickname,
-                    Username = d.UserName,
-                    isComplete = d.IsCompleteProfile,
-                    hasProgram = d.HasProgram,
-                    Status = d.Status
-                })
-                .ToList();
+                .Include(d => d.Certificates)
+                .ToListAsync();
+
+            var dtoList = dietitians.Select(d => new ShowDietitianDto
+            {
+                Id = d.Id,
+                Specialization = d.Specialization,
+                Experience = d.Experience,
+                Certifications = d.Certifications,
+                Nickname = d.Nickname,
+                Username = d.UserName,
+                isComplete = d.IsCompleteProfile,
+                hasProgram = d.HasProgram,
+                Status = d.Status,
+                CertificateImagePaths = d.Certificates?.Select(c => c.FilePath).ToList() ?? new List<string>()
+            }).ToList();
 
             return Ok(dtoList);
         }
+
 
 
 
@@ -64,9 +70,9 @@ namespace BeHealthyProject.Server.Controllers
 
             dietitian.Status = DietitianStatus.Accepted;
             await _userManager.UpdateAsync(dietitian);
-			await _hubContext.Clients.User(id).SendAsync("ReceiveApproval", "approved");
+            await _hubContext.Clients.User(id).SendAsync("ReceiveApproval", "approved");
 
-			return Ok(new { message = "Dietitian approved!" });
+            return Ok(new { message = "Dietitian approved!" });
 
         }
 
@@ -85,9 +91,9 @@ namespace BeHealthyProject.Server.Controllers
 
             dietitian.Status = DietitianStatus.Declined;
             await _userManager.UpdateAsync(dietitian);
-			await _hubContext.Clients.User(id).SendAsync("ReceiveApproval", "declined");
+            await _hubContext.Clients.User(id).SendAsync("ReceiveApproval", "declined");
 
-			return Ok(new { message = "Dietitian declined!" });
+            return Ok(new { message = "Dietitian declined!" });
         }
 
     }

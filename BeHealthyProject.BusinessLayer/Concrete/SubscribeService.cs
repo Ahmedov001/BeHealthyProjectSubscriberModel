@@ -15,37 +15,30 @@ public class SubscribeService : ISubscribeService
 		_dbContext = dbContext;
 		_userManager = userManager;
 	}
-	public async Task<Subscriber> Subscribe(string dietitianId, string userId, string plan)
-	{
-		var dietitianBaseUser = await _userManager.FindByIdAsync(dietitianId);
-		var userBaseUser = await _userManager.FindByIdAsync(userId);
+    public async Task<(bool Success, string Message)> Subscribe(string userId, string dietitianId, string plan)
+    {
+        var existing = await _dbContext.Subscribers
+            .FirstOrDefaultAsync(s => s.SubscriberId == userId && s.DietitianId == dietitianId);
 
-		var dietitian = dietitianBaseUser as Dietitian;
-		var user = userBaseUser as User;
+        if (existing != null)
+            return (false, "Already subscribed.");
 
-		if (dietitian == null || user == null)
-			throw new Exception("Either the Dietitian or the User was not found!");
+        var newSub = new Subscriber
+        {
+            SubscriberId = userId,
+            DietitianId = dietitianId,
+            Plan = plan
+        };
 
-		var existingSubscription = await _dbContext.Subscribers
-			.FirstOrDefaultAsync(s => s.DietitianId == dietitian.Id && s.SubscriberId == user.Id);
+        await _dbContext.Subscribers.AddAsync(newSub);
+        await _dbContext.SaveChangesAsync();
 
-		if (existingSubscription != null)
-			throw new Exception("User is already subscribed to this dietitian.");
+        return (true, "Subscribed successfully.");
+    }
 
-		var newSubscription = new Subscriber
-		{
-			DietitianId = dietitian.Id,
-			SubscriberId = user.Id,
-			Plan = plan
-		};
 
-		await _dbContext.Subscribers.AddAsync(newSubscription);
-		await _dbContext.SaveChangesAsync();
 
-		return newSubscription;
-	}
-
-	public async Task<Subscriber> Unsubscribe(string dietitianId, string userId)
+    public async Task<Subscriber> Unsubscribe(string dietitianId, string userId)
 	{
 		var subscription = await _dbContext.Subscribers
 			.FirstOrDefaultAsync(s => s.DietitianId == dietitianId && s.SubscriberId == userId);
@@ -79,4 +72,21 @@ public class SubscribeService : ISubscribeService
 
 		return dietitianIds;
 	}
+
+    public async Task<List<DietProgram>> GetSubscribedDietProgramsAsync(string userId)
+    {
+        var subscriptions = await _dbContext.Subscribers
+            .Where(s => s.SubscriberId == userId)
+            .ToListAsync();
+
+        var dietitianIds = subscriptions.Select(s => s.DietitianId).Distinct().ToList();
+
+        var dietPrograms = await _dbContext.DietPrograms
+            .Include(dp => dp.Meals)
+                .ThenInclude(m => m.Items)
+            .Where(dp => dietitianIds.Contains(dp.DietitianId))
+            .ToListAsync();
+
+        return dietPrograms;
+    }
 }

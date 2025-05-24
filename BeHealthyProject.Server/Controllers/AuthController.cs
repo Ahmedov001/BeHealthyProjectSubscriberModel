@@ -145,8 +145,11 @@ namespace BeHealthyProject.Server.Controllers
 				}
 
 				var token = GetToken(authClaims);
+                var refreshToken = GenerateRefreshToken(user.Id);
+                await _beHealthyDbContext.RefreshTokens.AddAsync(refreshToken);
+                await _beHealthyDbContext.SaveChangesAsync();
 
-				return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo, UserId = user.Id});
+                return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo, RefreshToken = refreshToken.Token, UserId = user.Id});
 			}
 
 			return Unauthorized();
@@ -177,15 +180,67 @@ namespace BeHealthyProject.Server.Controllers
 					authClaims.Add(new Claim(ClaimTypes.Role, role));
 				}
 				var token = GetToken(authClaims);
+                var refreshToken = GenerateRefreshToken(user.Id);
+                await _beHealthyDbContext.RefreshTokens.AddAsync(refreshToken);
+                await _beHealthyDbContext.SaveChangesAsync();
 
-				return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo, UserId = user.Id });
+                return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo, RefreshToken = refreshToken.Token, UserId = user.Id });
 			}
 
 			return Unauthorized();
 		}
 
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            var refreshToken = request.RefreshToken;
 
-		[HttpPost("forgot-password")]
+            var tokenInDb = await _beHealthyDbContext.RefreshTokens
+                .FirstOrDefaultAsync(t => t.Token == refreshToken);
+
+            if (tokenInDb == null || tokenInDb.IsUsed || tokenInDb.IsRevoked || tokenInDb.ExpiryDate < DateTime.UtcNow)
+            {
+                return BadRequest("Invalid or expired refresh token");
+            }
+
+            var user = await _userManager.FindByIdAsync(tokenInDb.UserId);
+            if (user == null)
+                return Unauthorized();
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var authClaims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, user.UserName),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(ClaimTypes.NameIdentifier, user.Id)
+    };
+
+            foreach (var role in roles)
+            {
+                authClaims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            var newToken = GetToken(authClaims);
+            var newRefreshToken = GenerateRefreshToken(user.Id);
+
+            tokenInDb.IsUsed = true;
+            tokenInDb.IsRevoked = true;
+
+            await _beHealthyDbContext.RefreshTokens.AddAsync(newRefreshToken);
+            await _beHealthyDbContext.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Token = new JwtSecurityTokenHandler().WriteToken(newToken),
+                Expiration = newToken.ValidTo,
+                RefreshToken = newRefreshToken.Token
+            });
+        }
+
+
+
+
+        [HttpPost("forgot-password")]
 		public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
 		{
 			if (!ModelState.IsValid)
@@ -289,7 +344,20 @@ namespace BeHealthyProject.Server.Controllers
 			return token;
 		}
 
-		[Authorize(Roles = "User")]
+        private RefreshToken GenerateRefreshToken(string userId)
+        {
+            return new RefreshToken
+            {
+                Token = Guid.NewGuid().ToString(),
+                UserId = userId,
+                ExpiryDate = DateTime.UtcNow.AddDays(7),
+                IsUsed = false,
+                IsRevoked = false
+            };
+        }
+
+
+        [Authorize(Roles = "User")]
 		[HttpGet("protected-user")]
 		public ActionResult<string> ProtectedEndpoint()
 		{

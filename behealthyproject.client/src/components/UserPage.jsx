@@ -30,6 +30,9 @@ function UserPage() {
         waterMl: 0
     });
 
+    const [dietPrograms, setDietPrograms] = useState([]);
+    const [hasSubscription, setHasSubscription] = useState(false);
+
     const meals = [
         { name: "Breakfast", icon: "bi-sun-fill", color: "#fbc02d" },
         { name: "Lunch", icon: "bi-brightness-high-fill", color: "#03a9f4" },
@@ -65,6 +68,26 @@ function UserPage() {
                 });
             })
             .catch(err => console.error("Error loading user profile:", err));
+    }, []);
+
+    useEffect(() => {
+        const token = sessionStorage.getItem('token');
+
+        axios.get('https://localhost:7148/api/User/my-diet-programs', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+            .then(res => {
+                if (res.data.length > 0) {
+                    setDietPrograms(res.data);
+                    setHasSubscription(true);
+                }
+            })
+            .catch(err => {
+                console.log("No subscription or error loading programs:", err);
+                setHasSubscription(false);
+            });
     }, []);
 
     const updateTotals = (food, action = 'add') => {
@@ -116,6 +139,7 @@ function UserPage() {
     return (
         <>
             <UserNavbar />
+            
             <div style={{ backgroundColor: '#2f343d' }} className="min-vh-100 text-white px-3 px-md-5 py-4">
                 <div className="mb-4">
                     <div className="d-flex justify-content-between align-items-center mb-2">
@@ -126,11 +150,35 @@ function UserPage() {
                         </div>
                     </div>
                     <p className="mb-0">
-                        <small >
+                        <small>
                             Fat: {totals.fat.toFixed(1)}g | Carbs: {totals.carbs.toFixed(1)}g | Protein: {totals.protein.toFixed(1)}g | Sugar: {totals.sugar.toFixed(1)}g
                         </small>
                     </p>
                 </div>
+
+                 {hasSubscription && (
+                    <div className="mb-4 p-4 rounded-4 shadow" style={{ backgroundColor: '#3a4049' }}>
+                        <h5 className="mb-3 fw-bold text-success">📋 Your Subscribed Diet Programs</h5>
+                        {dietPrograms.map((program, index) => (
+                            <div key={index} className="mb-3">
+                                <h6 className="fw-bold text-info">🎯 Goal: {program.goal}</h6>
+                                {program.meals.map((meal, idx) => (
+                                    <div key={idx} className="mb-2">
+                                        <strong className="text-warning">{meal.mealType}</strong>
+                                        <ul className="list-group list-group-flush">
+                                            {meal.items.map((item, i) => (
+                                                <li key={i} className="list-group-item bg-transparent text-white px-0 py-1">
+                                                    🍽 {item.name} – {item.quantity} {item.unit}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                                <hr className="border-secondary" />
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {userProfile && (
                     <div className="mb-4 p-4 rounded-4 shadow" style={{ backgroundColor: '#3a4049' }}>
@@ -199,6 +247,8 @@ function UserPage() {
                         )}
                     </div>
                 ))}
+
+               
             </div>
         </>
     );

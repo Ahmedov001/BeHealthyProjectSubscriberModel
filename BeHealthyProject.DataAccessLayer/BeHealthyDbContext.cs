@@ -19,6 +19,7 @@ namespace BeHealthyProject.Server.Data
 		public DbSet<Subscriber> Subscribers { get; set; }
 		public DbSet<DietProgram> DietPrograms { get; set;}
         public DbSet<ChatMessage> ChatMessages { get; set; }
-
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<DietitianCertificate> DietitianCertificates { get; set; }
     }
 }

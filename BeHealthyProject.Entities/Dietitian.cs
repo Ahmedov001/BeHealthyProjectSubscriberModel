@@ -12,5 +12,6 @@ namespace BeHealthyProject.Entities
 		public List<DietProgram> DietPrograms { get; set; } = new List<DietProgram> { };
 		public DietitianStatus Status { get; set; } = DietitianStatus.Pending;
 		public List<Subscriber>? Subscribers { get; set; } = new();
-	}
+        public ICollection<DietitianCertificate> Certificates { get; set; } = new List<DietitianCertificate>();
+    }
 }

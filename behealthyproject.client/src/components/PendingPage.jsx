@@ -20,7 +20,7 @@ const PendingPage = () => {
 
             connection.on("ReceiveApproval", (status) => {
                 if (status === "approved") {
-                    navigate("/dietitianpage");
+                    navigate("/createprogram");
                 } else if (status === "declined") {
                     navigate("/declinedpage");
                 }

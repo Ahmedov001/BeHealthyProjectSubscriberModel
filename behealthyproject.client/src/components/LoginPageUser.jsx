@@ -128,7 +128,7 @@ function LoginPageUser() {
                                 <span
                                     onClick={() => setShowPassword(!showPassword)}
                                     role="button"
-                                    aria-label={showPassword ? "Þifreyi gizle" : "Þifreyi göster"}
+                                    aria-label={showPassword ? "ï¿½ifreyi gizle" : "ï¿½ifreyi gï¿½ster"}
                                     style={{
                                         position: "absolute",
                                         top: "50%",

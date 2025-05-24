@@ -18,5 +18,6 @@ namespace BeHealthyProject.Entities.Dtos
 		public bool? isComplete { get; set; } = false;
 		public bool? hasProgram { get; set; } = false;
         public DietitianStatus Status { get; set; }
+        public List<string> CertificateImagePaths { get; set; } = new();
     }
 }
